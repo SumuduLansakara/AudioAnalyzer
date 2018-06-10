@@ -8,7 +8,7 @@
 using std::cout;
 using std::endl;
 
-sine_generator::sine_generator()
+sine_generator::sine_generator() : stream{nullptr}, mTableIndex{0}
 {
     for (int i{0}; i < TABLE_LENGTH; i++) {
         mTable[i] = (float) sin(((double) i / (double) TABLE_LENGTH) * M_PI * 2.);
@@ -91,7 +91,6 @@ bool sine_generator::start()
         return false;
 
     PaError err = Pa_StartStream(stream);
-
     return (err == paNoError);
 }
 
@@ -101,7 +100,6 @@ bool sine_generator::stop()
         return false;
 
     PaError err = Pa_StopStream(stream);
-
     return (err == paNoError);
 }
 
@@ -112,17 +110,15 @@ int sine_generator::paCallbackMethod(const void *inputBuffer, void *outputBuffer
 {
     float *out = (float*) outputBuffer;
 
-    // (void) timeInfo; /* Prevent unused variable warnings. */
+    (void) timeInfo;
     (void) statusFlags;
     (void) inputBuffer;
 
     for (unsigned long i{0}; i < framesPerBuffer; i++) {
-        *out++ = mTable[left_phase]; /* left */
-        *out++ = mTable[right_phase]; /* right */
-        left_phase += 1;
-        if (left_phase >= TABLE_LENGTH) left_phase -= TABLE_LENGTH;
-        right_phase += 3; /* higher pitch so we can distinguish left and right. */
-        if (right_phase >= TABLE_LENGTH) right_phase -= TABLE_LENGTH;
+        *out++ = mTable[mTableIndex]; /* left */
+        *out++ = mTable[mTableIndex]; /* right */
+        mTableIndex += 1;
+        if (mTableIndex >= TABLE_LENGTH) mTableIndex -= TABLE_LENGTH;
     }
 
     return paContinue;

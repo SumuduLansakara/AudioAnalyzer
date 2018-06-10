@@ -33,7 +33,6 @@ private:
     float mTable[TABLE_LENGTH];
 
     PaStream *stream;
-    int left_phase;
-    int right_phase;
+    int mTableIndex;
     char message[20];
 };

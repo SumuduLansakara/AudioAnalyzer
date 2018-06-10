@@ -20,7 +20,7 @@ void device_manager::debug_print() const
     cout << "[" << Pa_GetVersionInfo()->versionText << "]" << endl;
     cout << "Device count: " << mDeviceCount << endl;
 
-    for (device* d : get_devices()) {
+    for (device* d : mDevices) {
         cout << endl;
         d->debug_print();
     }
@@ -38,14 +38,17 @@ device_manager* device_manager::get_instance()
 }
 
 device_manager::device_manager() :
-mError(Pa_Initialize()), mDeviceCount{Pa_GetDeviceCount()}
+mError(Pa_Initialize()), mDeviceCount{Pa_GetDeviceCount()},
+mDefaultInputDevice{nullptr}, mDefaultOutputDevice{nullptr}, mDevices{}
 {
+    check_error(mError);
 }
 
 device_manager::~device_manager()
 {
-    if (mError == paNoError) {
+    if (sInstance != nullptr) {
         Pa_Terminate();
+        sInstance = nullptr;
     }
 }
 
@@ -62,11 +65,18 @@ void device_manager::check_error(PaError err)
     }
 }
 
-vector<device*> device_manager::get_devices() const
+void device_manager::load_devices(int sampleFormat)
 {
-    vector<device*> devices;
+    const int defaultInputDeviceId = Pa_GetDefaultInputDevice();
+    const int defaultOutputDeviceId = Pa_GetDefaultOutputDevice();
     for (int i{0}; i < mDeviceCount; ++i) {
-        devices.push_back(new device(i, paFloat32));
+        device* dev = new device(i, sampleFormat);
+        mDevices.push_back(dev);
+        if (i == defaultInputDeviceId) {
+            mDefaultInputDevice = dev;
+        }
+        if (i == defaultOutputDeviceId) {
+            mDefaultOutputDevice = dev;
+        }
     }
-    return devices;
 }

@@ -12,13 +12,27 @@ public:
     void operator=(const device_manager&) = delete;
     ~device_manager();
 
+    void load_devices(int sampleFormat);
     void check_error(PaError err);
-
-    std::vector<device*> get_devices() const;
 
     int device_count() const
     {
         return mDeviceCount;
+    }
+
+    device* default_input_device() const
+    {
+        return mDefaultInputDevice;
+    }
+
+    device* default_output_device() const
+    {
+        return mDefaultOutputDevice;
+    }
+
+    std::vector<device*> devices() const
+    {
+        return mDevices;
     }
 
     void debug_print() const;
@@ -28,6 +42,9 @@ private:
 
     PaError mError;
     int mDeviceCount;
+    device* mDefaultInputDevice;
+    device* mDefaultOutputDevice;
+    std::vector<device*> mDevices;
 
     static device_manager* sInstance;
 };

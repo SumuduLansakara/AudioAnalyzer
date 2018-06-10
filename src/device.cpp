@@ -1,8 +1,6 @@
-#include "device.h"
-
 #include <iostream>
-#include <portaudio.h>
 #include <iterator>
+#include "device.h"
 
 using std::cout;
 using std::endl;
@@ -55,6 +53,8 @@ const double device::STANDARD_SAMPLE_RATES[] = {
 device::device(unsigned int deviceNo, int sampleFormat) :
 mDeviceIndex{deviceNo},
 mSampleFormat{sampleFormat},
+mInputParams{},
+mOutputParams{},
 mName{},
 mHostApi{},
 mDefaultSampleRate{},
@@ -90,23 +90,21 @@ void device::load_device()
 
 void device::load_sample_rates()
 {
-    PaStreamParameters inputParams;
-    inputParams.device = mDeviceIndex;
-    inputParams.channelCount = mMaxInputChannels;
-    inputParams.sampleFormat = mSampleFormat;
-    inputParams.suggestedLatency = 0;
-    inputParams.hostApiSpecificStreamInfo = nullptr;
+    mInputParams.device = mDeviceIndex;
+    mInputParams.channelCount = mMaxInputChannels;
+    mInputParams.sampleFormat = mSampleFormat;
+    mInputParams.suggestedLatency = 0;
+    mInputParams.hostApiSpecificStreamInfo = nullptr;
 
-    PaStreamParameters outputParams;
-    outputParams.device = mDeviceIndex;
-    outputParams.channelCount = mMaxOutputChannels;
-    outputParams.sampleFormat = mSampleFormat;
-    outputParams.suggestedLatency = 0;
-    outputParams.hostApiSpecificStreamInfo = nullptr;
+    mOutputParams.device = mDeviceIndex;
+    mOutputParams.channelCount = mMaxOutputChannels;
+    mOutputParams.sampleFormat = mSampleFormat;
+    mOutputParams.suggestedLatency = 0;
+    mOutputParams.hostApiSpecificStreamInfo = nullptr;
 
-    mHalfDuplexInputSampleRates = get_supported_sample_rates(&inputParams, nullptr);
-    mHalfDuplexOutputSampleRates = get_supported_sample_rates(nullptr, &outputParams);
-    mFullDuplexSampleRates = get_supported_sample_rates(&inputParams, &outputParams);
+    mHalfDuplexInputSampleRates = get_supported_sample_rates(&mInputParams, nullptr);
+    mHalfDuplexOutputSampleRates = get_supported_sample_rates(nullptr, &mOutputParams);
+    mFullDuplexSampleRates = get_supported_sample_rates(&mInputParams, &mOutputParams);
 }
 
 vector<double> device::get_supported_sample_rates(
