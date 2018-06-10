@@ -1,146 +1,132 @@
 #include <cmath>
+#include <exception>
 #include <iostream>
 #include <portaudio.h>
 
+#include "device.h"
+#include "device_manager.h"
 #include "sine_generator.h"
 #include "settings.h"
 
 using std::cout;
 using std::endl;
 
-sine_generator::sine_generator() : stream{nullptr}, mTableIndex{0}
+sine_generator::sine_generator(unsigned int channels, double frequency) :
+mChannels{channels}, mFrequency{frequency}, mStream{nullptr},
+mTableLength{static_cast<int> (SAMPLE_RATE / frequency)}, mTableIndex{0},
+mTable{new float[mTableLength]}
 {
-    for (int i{0}; i < TABLE_LENGTH; i++) {
-        mTable[i] = (float) sin(((double) i / (double) TABLE_LENGTH) * M_PI * 2.);
+
+    for (int i{0}; i < mTableLength; i++) {
+        mTable[i] = static_cast<float> (sin(2 * M_PI * ((double) i / mTableLength)));
     }
 }
 
 sine_generator::~sine_generator()
 {
+    delete [] mTable;
 }
 
 void sine_generator::debug_print() const
 {
-    for (int i{0}; i < TABLE_LENGTH; i++) {
+    for (int i{0}; i < mTableLength; i++) {
         cout << mTable[i] << " ";
     }
     cout << endl;
 }
 
-bool sine_generator::open(PaDeviceIndex index)
+void sine_generator::setup_stream(device* outputDevice)
 {
-    PaStreamParameters outputParameters;
+    PaStreamParameters outputParameters = outputDevice->output_parameters();
+    outputParameters.channelCount = mChannels;
+    outputParameters.suggestedLatency = outputDevice->default_low_output_latency();
+    outputParameters.hostApiSpecificStreamInfo = nullptr;
 
-    outputParameters.device = index;
-    if (outputParameters.device == paNoDevice) {
-        return false;
-    }
+    PaError err{Pa_OpenStream(
+        &mStream,
+        nullptr, /* no input */
+        &outputParameters,
+        SAMPLE_RATE,
+        paFramesPerBufferUnspecified,
+        paClipOff,
+        &sine_generator::stream_data_callback,
+        this
+        )};
+    device_manager::get_instance()->check_error(err);
 
-    const PaDeviceInfo* pInfo = Pa_GetDeviceInfo(index);
-    if (pInfo != 0) {
-        printf("Output device name: '%s'\r", pInfo->name);
-    }
-
-    outputParameters.channelCount = 2; /* stereo output */
-    outputParameters.sampleFormat = paFloat32; /* 32 bit floating point output */
-    outputParameters.suggestedLatency = Pa_GetDeviceInfo(outputParameters.device)->defaultLowOutputLatency;
-    outputParameters.hostApiSpecificStreamInfo = NULL;
-
-    PaError err = Pa_OpenStream(
-            &stream,
-            NULL, /* no input */
-            &outputParameters,
-            SAMPLE_RATE,
-            paFramesPerBufferUnspecified,
-            paClipOff, /* we won't output out of range samples so don't bother clipping them */
-            &sine_generator::paCallback,
-            this /* Using 'this' for userData so we can cast to Sine* in paCallback method */
-            );
-
+    err = Pa_SetStreamFinishedCallback(mStream, &sine_generator::stream_finished_callback);
     if (err != paNoError) {
-        /* Failed to open stream to device !!! */
-        return false;
+        Pa_CloseStream(mStream);
+        device_manager::get_instance()->check_error(err);
+    }
+}
+
+void sine_generator::close()
+{
+    if (mStream == nullptr) {
+        throw std::runtime_error("stream is already closed");
     }
 
-    err = Pa_SetStreamFinishedCallback(stream, &sine_generator::paStreamFinished);
+    PaError err{Pa_CloseStream(mStream)};
+    mStream = nullptr;
+    device_manager::get_instance()->check_error(err);
+}
 
-    if (err != paNoError) {
-        Pa_CloseStream(stream);
-        stream = 0;
-
-        return false;
+void sine_generator::start()
+{
+    if (mStream == nullptr) {
+        throw std::runtime_error("stream is closed");
     }
-
-    return true;
+    device_manager::get_instance()->check_error(Pa_StartStream(mStream));
 }
 
-bool sine_generator::close()
+void sine_generator::stop()
 {
-    if (stream == 0)
-        return false;
-
-    PaError err = Pa_CloseStream(stream);
-    stream = 0;
-
-    return (err == paNoError);
+    if (mStream == nullptr) {
+        throw std::runtime_error("stream is closed");
+    }
+    device_manager::get_instance()->check_error(Pa_StopStream(mStream));
 }
 
-bool sine_generator::start()
-{
-    if (stream == 0)
-        return false;
-
-    PaError err = Pa_StartStream(stream);
-    return (err == paNoError);
-}
-
-bool sine_generator::stop()
-{
-    if (stream == 0)
-        return false;
-
-    PaError err = Pa_StopStream(stream);
-    return (err == paNoError);
-}
-
-int sine_generator::paCallbackMethod(const void *inputBuffer, void *outputBuffer,
+int sine_generator::on_stream_data(const void *inputBuffer,
+        void *outputBuffer,
         unsigned long framesPerBuffer,
         const PaStreamCallbackTimeInfo* timeInfo,
         PaStreamCallbackFlags statusFlags)
 {
-    float *out = (float*) outputBuffer;
+    float *out{(float*) outputBuffer};
 
     (void) timeInfo;
     (void) statusFlags;
     (void) inputBuffer;
 
     for (unsigned long i{0}; i < framesPerBuffer; i++) {
-        *out++ = mTable[mTableIndex]; /* left */
-        *out++ = mTable[mTableIndex]; /* right */
+        for (unsigned int c{0}; c < mChannels; ++c) {
+            *out++ = mTable[mTableIndex];
+        }
         mTableIndex += 1;
-        if (mTableIndex >= TABLE_LENGTH) mTableIndex -= TABLE_LENGTH;
+        if (mTableIndex >= mTableLength) mTableIndex -= mTableLength;
     }
 
     return paContinue;
-
 }
 
-int sine_generator::paCallback(const void *inputBuffer, void *outputBuffer,
+int sine_generator::stream_data_callback(const void *inputBuffer, void *outputBuffer,
         unsigned long framesPerBuffer,
         const PaStreamCallbackTimeInfo* timeInfo,
         PaStreamCallbackFlags statusFlags,
         void *userData)
 {
-    return ((sine_generator*) userData)->paCallbackMethod(inputBuffer,
+    return ((sine_generator*) userData)->on_stream_data(inputBuffer,
             outputBuffer, framesPerBuffer, timeInfo, statusFlags);
 }
 
-void sine_generator::paStreamFinishedMethod()
+void sine_generator::stream_finished_callback(void* userData)
 {
-    cout << "stream finished" << endl;
+    return ((sine_generator*) userData)->on_stream_finish();
 }
 
-void sine_generator::paStreamFinished(void* userData)
+void sine_generator::on_stream_finish()
 {
-    return ((sine_generator*) userData)->paStreamFinishedMethod();
+    cout << "stream finished" << endl;
 }

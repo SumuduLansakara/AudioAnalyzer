@@ -55,8 +55,6 @@ device_manager::~device_manager()
 void device_manager::check_error(PaError err)
 {
     if (err != paNoError) {
-        cerr << "PortAudio error [" << err << "]! "
-                << Pa_GetErrorText(err) << endl;
         Pa_Terminate();
         std::stringstream ss;
         ss << "PortAudio error [" << err << "]: ";
