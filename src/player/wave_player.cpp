@@ -1,33 +1,28 @@
-#include <cmath>
 #include <exception>
 #include <iostream>
 #include <portaudio.h>
 
 #include "device.h"
 #include "device_manager.h"
-#include "sine_generator.h"
+#include "wave_player.h"
 #include "settings.h"
 
 using std::cout;
 using std::endl;
 
-sine_generator::sine_generator(unsigned int channels, double frequency) :
-mChannels{channels}, mFrequency{frequency}, mStream{nullptr},
-mTableLength{static_cast<int> (SAMPLE_RATE / frequency)}, mTableIndex{0},
-mTable{new float[mTableLength]}
+wave_player::wave_player(unsigned int channels, double frequency) :
+mTableLength{static_cast<int> (SAMPLE_RATE / frequency)},
+mTable{new float[mTableLength]}, mChannels{channels}, mFrequency{frequency},
+mStream{nullptr}, mTableIndex{0}
 {
-
-    for (int i{0}; i < mTableLength; i++) {
-        mTable[i] = static_cast<float> (sin(2 * M_PI * ((double) i / mTableLength)));
-    }
 }
 
-sine_generator::~sine_generator()
+wave_player::~wave_player()
 {
     delete [] mTable;
 }
 
-void sine_generator::debug_print() const
+void wave_player::debug_print() const
 {
     for (int i{0}; i < mTableLength; i++) {
         cout << mTable[i] << " ";
@@ -35,8 +30,10 @@ void sine_generator::debug_print() const
     cout << endl;
 }
 
-void sine_generator::setup_stream(device* outputDevice)
+void wave_player::setup_stream(device* outputDevice)
 {
+    generate_wave_table();
+
     PaStreamParameters outputParameters = outputDevice->output_parameters();
     outputParameters.channelCount = mChannels;
     outputParameters.suggestedLatency = outputDevice->default_low_output_latency();
@@ -49,19 +46,19 @@ void sine_generator::setup_stream(device* outputDevice)
         SAMPLE_RATE,
         paFramesPerBufferUnspecified,
         paClipOff,
-        &sine_generator::stream_data_callback,
+        &wave_player::stream_data_callback,
         this
         )};
     device_manager::get_instance()->check_error(err);
 
-    err = Pa_SetStreamFinishedCallback(mStream, &sine_generator::stream_finished_callback);
+    err = Pa_SetStreamFinishedCallback(mStream, &wave_player::stream_finished_callback);
     if (err != paNoError) {
         Pa_CloseStream(mStream);
         device_manager::get_instance()->check_error(err);
     }
 }
 
-void sine_generator::close()
+void wave_player::close()
 {
     if (mStream == nullptr) {
         throw std::runtime_error("stream is already closed");
@@ -72,7 +69,7 @@ void sine_generator::close()
     device_manager::get_instance()->check_error(err);
 }
 
-void sine_generator::start()
+void wave_player::play()
 {
     if (mStream == nullptr) {
         throw std::runtime_error("stream is closed");
@@ -80,7 +77,7 @@ void sine_generator::start()
     device_manager::get_instance()->check_error(Pa_StartStream(mStream));
 }
 
-void sine_generator::stop()
+void wave_player::stop()
 {
     if (mStream == nullptr) {
         throw std::runtime_error("stream is closed");
@@ -88,7 +85,7 @@ void sine_generator::stop()
     device_manager::get_instance()->check_error(Pa_StopStream(mStream));
 }
 
-int sine_generator::on_stream_data(const void *inputBuffer,
+int wave_player::on_stream_data(const void *inputBuffer,
         void *outputBuffer,
         unsigned long framesPerBuffer,
         const PaStreamCallbackTimeInfo* timeInfo,
@@ -111,22 +108,22 @@ int sine_generator::on_stream_data(const void *inputBuffer,
     return paContinue;
 }
 
-int sine_generator::stream_data_callback(const void *inputBuffer, void *outputBuffer,
+int wave_player::stream_data_callback(const void *inputBuffer, void *outputBuffer,
         unsigned long framesPerBuffer,
         const PaStreamCallbackTimeInfo* timeInfo,
         PaStreamCallbackFlags statusFlags,
         void *userData)
 {
-    return ((sine_generator*) userData)->on_stream_data(inputBuffer,
+    return ((wave_player*) userData)->on_stream_data(inputBuffer,
             outputBuffer, framesPerBuffer, timeInfo, statusFlags);
 }
 
-void sine_generator::stream_finished_callback(void* userData)
+void wave_player::stream_finished_callback(void* userData)
 {
-    return ((sine_generator*) userData)->on_stream_finish();
+    return ((wave_player*) userData)->on_stream_finish();
 }
 
-void sine_generator::on_stream_finish()
+void wave_player::on_stream_finish()
 {
     cout << "stream finished" << endl;
 }

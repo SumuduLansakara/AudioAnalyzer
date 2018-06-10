@@ -2,20 +2,26 @@
 
 class device;
 
-class sine_generator
+class wave_player
 {
 public:
-    sine_generator(unsigned int channels, double frequency);
-    sine_generator(const sine_generator& orig) = delete;
-    void operator=(const sine_generator& orig) = delete;
-    ~sine_generator();
+    wave_player(unsigned int channels, double frequency);
+    wave_player(const wave_player& orig) = delete;
+    void operator=(const wave_player& orig) = delete;
+    virtual ~wave_player();
 
     void setup_stream(device* outputDevice);
-    void start();
+    void play();
     void close();
     void stop();
 
     void debug_print() const;
+
+protected:
+    virtual void generate_wave_table() = 0;
+    int mTableLength;
+    float* mTable;
+
 private:
     static void stream_finished_callback(void* userData);
     void on_stream_finish();
@@ -33,7 +39,5 @@ private:
     const unsigned int mChannels;
     const double mFrequency;
     PaStream *mStream;
-    int mTableLength;
     int mTableIndex;
-    float* mTable;
 };

@@ -1,6 +1,6 @@
 #include <iostream>
 #include "device_manager.h"
-#include "generator/sine_generator.h"
+#include "player/sine_wave_player.h"
 
 using std::cout;
 using std::endl;
@@ -14,17 +14,17 @@ int main(int, char**)
     cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
-    sine_generator generator{2, 440};
-    generator.debug_print();
+    sine_wave_player player{2, 440};
+    player.debug_print();
 
     const unsigned int seconds = 5;
-    generator.setup_stream(devMan->default_output_device());
-    generator.start();
+    player.setup_stream(devMan->default_output_device());
+    player.play();
 
     cout << "playing for " << seconds << " seconds" << endl;
     Pa_Sleep(seconds * 1000);
 
-    generator.stop();
-    generator.close();
+    player.stop();
+    player.close();
     return 0;
 }
