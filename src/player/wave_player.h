@@ -5,7 +5,7 @@ class device;
 class wave_player
 {
 public:
-    wave_player(unsigned int channels, double frequency);
+    wave_player(unsigned int channels, double sample_rate, double frequency);
     wave_player(const wave_player& orig) = delete;
     void operator=(const wave_player& orig) = delete;
     virtual ~wave_player();
@@ -16,11 +16,6 @@ public:
     void stop();
 
     void debug_print() const;
-
-protected:
-    virtual void generate_wave_table() = 0;
-    int mTableLength;
-    float* mTable;
 
 private:
     static void stream_finished_callback(void* userData);
@@ -37,7 +32,14 @@ private:
                        PaStreamCallbackFlags statusFlags);
 
     const unsigned int mChannels;
+    const double mSampleRate;
     const double mFrequency;
     PaStream *mStream;
     int mTableIndex;
+
+protected:
+    virtual void generate_wave_table() = 0;
+    int mTableLength;
+    float* mTable;
+
 };

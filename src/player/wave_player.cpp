@@ -5,15 +5,15 @@
 #include "device.h"
 #include "device_manager.h"
 #include "wave_player.h"
-#include "settings.h"
 
 using std::cout;
 using std::endl;
 
-wave_player::wave_player(unsigned int channels, double frequency) :
-mTableLength{static_cast<int> (SAMPLE_RATE / frequency)},
-mTable{new float[mTableLength]}, mChannels{channels}, mFrequency{frequency},
-mStream{nullptr}, mTableIndex{0}
+wave_player::wave_player(unsigned int channels, const double sample_rate, double frequency) :
+mChannels{channels}, mSampleRate{sample_rate}, mFrequency{frequency},
+mStream{nullptr}, mTableIndex{0},
+mTableLength{static_cast<int> (sample_rate / frequency)},
+mTable{new float[mTableLength]}
 {
 }
 
@@ -43,7 +43,7 @@ void wave_player::setup_stream(device* outputDevice)
         &mStream,
         nullptr, /* no input */
         &outputParameters,
-        SAMPLE_RATE,
+        mSampleRate,
         paFramesPerBufferUnspecified,
         paClipOff,
         &wave_player::stream_data_callback,

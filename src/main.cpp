@@ -14,9 +14,7 @@ int main(int, char**)
     cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
-    sine_wave_player player{2, 440};
-    player.debug_print();
-
+    sine_wave_player player{2, defaultOutputDevice->default_sample_rate(), 440};
     const unsigned int seconds = 5;
     player.setup_stream(devMan->default_output_device());
     player.play();
