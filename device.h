@@ -9,6 +9,8 @@ class device
 {
 public:
     device(unsigned int device_no, int sample_format);
+    device(const device&) = delete;
+    void operator=(const device&) = delete;
 
     void debug_print() const;
 

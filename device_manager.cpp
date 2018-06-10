@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include <utility>
 #include <exception>
 #include <sstream>
 
@@ -19,9 +20,9 @@ void device_manager::debug_print() const
     cout << "[" << Pa_GetVersionInfo()->versionText << "]" << endl;
     cout << "Device count: " << mDeviceCount << endl;
 
-    for (device& d : get_devices()) {
+    for (device* d : get_devices()) {
         cout << endl;
-        d.debug_print();
+        d->debug_print();
     }
     cout << "******************************" << endl;
 }
@@ -61,11 +62,11 @@ void device_manager::check_error(PaError err)
     }
 }
 
-vector<device> device_manager::get_devices() const
+vector<device*> device_manager::get_devices() const
 {
-    vector<device> devices;
+    vector<device*> devices;
     for (int i{0}; i < mDeviceCount; ++i) {
-        devices.push_back(device(i, paFloat32));
+        devices.push_back(new device(i, paFloat32));
     }
     return devices;
 }
