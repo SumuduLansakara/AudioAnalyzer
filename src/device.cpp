@@ -53,11 +53,11 @@ const double device::STANDARD_SAMPLE_RATES[] = {
 device::device(unsigned int deviceNo, int sampleFormat) :
 mDeviceIndex{deviceNo},
 mSampleFormat{sampleFormat},
-mInputParams{},
-mOutputParams{},
 mName{},
 mHostApi{},
 mDefaultSampleRate{},
+mInputParams{},
+mOutputParams{},
 mMaxInputChannels{},
 mDefaultLowInputLatency{},
 mDefaultHighInputLatency{},
