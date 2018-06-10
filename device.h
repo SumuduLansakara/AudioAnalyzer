@@ -11,6 +11,7 @@ public:
     device(unsigned int device_no, int sample_format);
 
     void debug_print() const;
+
 private:
     void load_device();
     void load_sample_rates();

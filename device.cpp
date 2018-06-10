@@ -114,10 +114,9 @@ vector<double> device::get_supported_sample_rates(
         const PaStreamParameters *outputParams) const
 {
     vector<double> supportedSampleRates;
-    for (unsigned int i{0}; i < std::size(STANDARD_SAMPLE_RATES); i++) {
-        PaError err{Pa_IsFormatSupported(inputParams, outputParams, STANDARD_SAMPLE_RATES[i])};
-        if (err == paFormatIsSupported) {
-            supportedSampleRates.push_back(STANDARD_SAMPLE_RATES[i]);
+    for (double sr : STANDARD_SAMPLE_RATES) {
+        if (Pa_IsFormatSupported(inputParams, outputParams, sr) == paFormatIsSupported) {
+            supportedSampleRates.push_back(sr);
         }
     }
     return supportedSampleRates;

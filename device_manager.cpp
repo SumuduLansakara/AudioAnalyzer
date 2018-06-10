@@ -1,6 +1,8 @@
 #include <iostream>
 #include <math.h>
 #include <vector>
+#include <exception>
+#include <sstream>
 
 #include "device_manager.h"
 #include "device.h"
@@ -16,9 +18,9 @@ void device_manager::debug_print() const
     cout << "PortAudio v." << Pa_GetVersion() << endl;
     cout << "[" << Pa_GetVersionInfo()->versionText << "]" << endl;
     cout << "Device count: " << mDeviceCount << endl;
-    
+
     for (device& d : get_devices()) {
-	cout << endl;
+        cout << endl;
         d.debug_print();
     }
     cout << "******************************" << endl;
@@ -51,14 +53,12 @@ void device_manager::check_error(PaError err)
     if (err != paNoError) {
         cerr << "PortAudio error [" << err << "]! "
                 << Pa_GetErrorText(err) << endl;
-        terminate(err);
+        Pa_Terminate();
+        std::stringstream ss;
+        ss << "PortAudio error [" << err << "]: ";
+        ss << Pa_GetErrorText(err);
+        throw std::runtime_error(ss.str());
     }
-}
-
-void device_manager::terminate(int err)
-{
-    Pa_Terminate();
-    exit(err);
 }
 
 vector<device> device_manager::get_devices() const

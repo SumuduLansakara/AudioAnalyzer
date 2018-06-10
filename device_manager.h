@@ -11,7 +11,6 @@ public:
     ~device_manager();
 
     void check_error(PaError err);
-    void terminate(int err);
 
     std::vector<device> get_devices() const;
 
