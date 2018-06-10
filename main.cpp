@@ -15,10 +15,9 @@ void terminate(int err)
 
 void check_error(PaError err)
 {
-    if (err != paNoError)
-    {
+    if (err != paNoError) {
         cerr << "PortAudio error [" << err << "]! "
-            << Pa_GetErrorText(err) << endl;
+                << Pa_GetErrorText(err) << endl;
         terminate(err);
     }
 }
@@ -37,21 +36,14 @@ int main(int argc, char** argv)
     print_portaudio_version_info();
 
     int n = Pa_GetDeviceCount();
-    if (n < 0)
-    {
+    if (n < 0) {
         cerr << "No device found!" << endl;
         terminate(-1);
     }
-    
-    const PaDeviceInfo* dev_info;
-    for (int i = 0; i < n; i++)
-    {
+
+    for (int i = 0; i < n; i++) {
         Device d(i, paFloat32);
         d.debug_print();
-        // dev_info = Pa_GetDeviceInfo(i);
-        // cout << "name    : " << dev_info->name << endl;
-        // cout << "host API: " << dev_info->hostApi << endl;
-        // cout << "host API: " << Pa_GetHostApiInfo(dev_info->hostApi)->name << endl;
         cout << endl;
     }
 
