@@ -75,10 +75,10 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const double* buffe
 void spectrum_analyzer::debug_print_window(unsigned int channel, const double* buffer, unsigned int start_index, unsigned int len)
 {
     double sum = 0;
-    float minimum = 999999;
-    float maximum = -999999;
+    double minimum = 999999;
+    double maximum = -999999;
     for (unsigned int i = start_index; i < start_index + len; ++i) {
-        const float sample = buffer[get_real_index(i, channel)];
+        const double sample = buffer[get_real_index(i, channel)];
         minimum = std::min(minimum, sample);
         maximum = std::max(maximum, sample);
         sum += sample;
