@@ -11,7 +11,7 @@ using std::endl;
 
 wave_player::wave_player(unsigned int channels, const double sample_rate, double frequency) :
 mChannels{channels}, mSampleRate{sample_rate}, mFrequency{frequency},
-mStream{nullptr}, mTableIndex{0},
+mStream{nullptr}, mPhase{0},
 mTableLength{static_cast<int> (sample_rate / frequency)},
 mTable{new float[mTableLength]}
 {
@@ -39,16 +39,14 @@ void wave_player::setup_stream(device* outputDevice)
     outputParameters.suggestedLatency = outputDevice->default_low_output_latency();
     outputParameters.hostApiSpecificStreamInfo = nullptr;
 
-    PaError err{Pa_OpenStream(
-                              &mStream,
+    PaError err{Pa_OpenStream(&mStream,
                               nullptr, /* no input */
                               &outputParameters,
                               mSampleRate,
                               paFramesPerBufferUnspecified,
                               paClipOff,
                               &wave_player::stream_data_callback,
-                              this
-                              )};
+                              this)};
     device_manager::get_instance()->check_error(err);
 
     err = Pa_SetStreamFinishedCallback(mStream, &wave_player::stream_finished_callback);
@@ -99,10 +97,10 @@ int wave_player::on_stream_data(const void *inputBuffer,
 
     for (unsigned long i{0}; i < framesPerBuffer; i++) {
         for (unsigned int c{0}; c < mChannels; ++c) {
-            *out++ = mTable[mTableIndex];
+            *out++ = mTable[mPhase];
         }
-        mTableIndex += 1;
-        if (mTableIndex >= mTableLength) mTableIndex -= mTableLength;
+        mPhase += 1;
+        if (mPhase >= mTableLength) mPhase -= mTableLength;
     }
 
     return paContinue;

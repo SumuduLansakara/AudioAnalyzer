@@ -34,7 +34,7 @@ private:
     const double mSampleRate;
     const double mFrequency;
     PaStream *mStream;
-    int mTableIndex;
+    int mPhase;
 
 protected:
     virtual void generate_wave_table() = 0;
