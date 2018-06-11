@@ -34,7 +34,7 @@ void wave_player::setup_stream(device* outputDevice)
 {
     generate_wave_table();
 
-    PaStreamParameters outputParameters = outputDevice->output_parameters();
+    PaStreamParameters outputParameters{outputDevice->output_parameters()};
     outputParameters.channelCount = mChannels;
     outputParameters.suggestedLatency = outputDevice->default_low_output_latency();
     outputParameters.hostApiSpecificStreamInfo = nullptr;

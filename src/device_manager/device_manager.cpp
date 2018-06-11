@@ -27,7 +27,7 @@ void device_manager::debug_print() const
     cout << "******************************" << endl;
 }
 
-device_manager* device_manager::sInstance = nullptr;
+device_manager* device_manager::sInstance{nullptr};
 
 device_manager* device_manager::get_instance()
 {
@@ -65,10 +65,10 @@ void device_manager::check_error(PaError err)
 
 void device_manager::load_devices(int sampleFormat)
 {
-    const int defaultInputDeviceId = Pa_GetDefaultInputDevice();
-    const int defaultOutputDeviceId = Pa_GetDefaultOutputDevice();
+    const int defaultInputDeviceId{Pa_GetDefaultInputDevice()};
+    const int defaultOutputDeviceId{Pa_GetDefaultOutputDevice()};
     for (int i{0}; i < mDeviceCount; ++i) {
-        device* dev = new device(i, sampleFormat);
+        device* dev{new device(i, sampleFormat)};
         mDevices.push_back(dev);
         if (i == defaultInputDeviceId) {
             mDefaultInputDevice = dev;

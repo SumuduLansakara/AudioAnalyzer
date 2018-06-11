@@ -7,15 +7,15 @@ using std::endl;
 
 int main(int, char**)
 {
-    device_manager* devMan = device_manager::get_instance();
+    device_manager* devMan{device_manager::get_instance()};
     devMan->load_devices(paFloat32);
 
-    auto defaultOutputDevice = devMan->default_output_device();
+    auto defaultOutputDevice{devMan->default_output_device()};
     cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
     sine_wave_player player{2, defaultOutputDevice->default_sample_rate(), 440};
-    const unsigned int seconds = 5;
+    const unsigned int seconds{5};
     player.setup_stream(devMan->default_output_device());
     player.play();
 
