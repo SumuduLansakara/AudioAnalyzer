@@ -31,7 +31,7 @@ void demo_listener()
     audio_listener listener{2, defaultInputDevice->default_sample_rate(), paFloat32, 1024};
     listener.setup_stream(defaultInputDevice);
     listener.start();
-    Pa_Sleep(5000);
+    device_manager::get_instance()->sleep_millis(5000);
     listener.close();
     cout << "listening finished" << endl;
 }

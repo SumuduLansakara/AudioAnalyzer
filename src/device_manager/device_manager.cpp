@@ -63,6 +63,11 @@ void device_manager::check_error(PaError err)
     }
 }
 
+void device_manager::sleep_millis(long milliSecs) const
+{
+    Pa_Sleep(milliSecs);
+}
+
 void device_manager::load_default_devices(int sampleFormat)
 {
     if (not mDevices.empty()) {

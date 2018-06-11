@@ -15,6 +15,8 @@ public:
     void load_all_devices(int sampleFormat);
     void check_error(PaError err);
 
+    void sleep_millis(long milliSecs) const;
+
     int device_count() const {
         return mDeviceCount;
     }
