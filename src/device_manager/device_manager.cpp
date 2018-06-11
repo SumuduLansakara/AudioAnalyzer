@@ -73,8 +73,8 @@ void device_manager::load_default_devices(int sampleFormat)
     if (not mDevices.empty()) {
         return;
     }
-    mDefaultInputDevice = new device{Pa_GetDefaultInputDevice(), sampleFormat};
-    mDefaultOutputDevice = new device{Pa_GetDefaultOutputDevice(), sampleFormat};
+    mDefaultInputDevice = make_device(Pa_GetDefaultInputDevice(), sampleFormat);
+    mDefaultOutputDevice = make_device(Pa_GetDefaultOutputDevice(), sampleFormat);
 }
 
 void device_manager::load_all_devices(int sampleFormat)
@@ -82,7 +82,7 @@ void device_manager::load_all_devices(int sampleFormat)
     const int defaultInputDeviceId{Pa_GetDefaultInputDevice()};
     const int defaultOutputDeviceId{Pa_GetDefaultOutputDevice()};
     for (int i{0}; i < mDeviceCount; ++i) {
-        device * dev{new device(i, sampleFormat)};
+        device * dev{make_device(i, sampleFormat)};
         mDevices.push_back(dev);
         if (i == defaultInputDeviceId) {
             mDefaultInputDevice = dev;
@@ -91,4 +91,13 @@ void device_manager::load_all_devices(int sampleFormat)
             mDefaultOutputDevice = dev;
         }
     }
+}
+
+device* device_manager::make_device(int deviceId, int sampleFormat) const
+{
+    if (deviceId < 0) {
+        cout << "invalid device id " << deviceId << endl;
+        return nullptr;
+    }
+    return new device(deviceId, sampleFormat);
 }

@@ -37,6 +37,7 @@ public:
 
 private:
     device_manager();
+    device* make_device(int deviceId, int sampleFormat) const;
 
     PaError mError;
     int mDeviceCount;

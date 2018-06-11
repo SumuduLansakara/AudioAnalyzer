@@ -50,8 +50,8 @@ const double device::STANDARD_SAMPLE_RATES[] = {
     44100.0, 48000.0, 88200.0, 96000.0, 192000.0
 };
 
-device::device(int deviceNo, int sampleFormat) :
-mDeviceIndex{deviceNo},
+device::device(int deviceId, int sampleFormat) :
+mDeviceIndex{deviceId},
 mSampleFormat{sampleFormat},
 mName{},
 mHostApi{},

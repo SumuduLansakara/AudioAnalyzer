@@ -8,7 +8,7 @@ class PaStreamParameters;
 
 class device {
 public:
-    device(int device_no, int sample_format);
+    device(int deviceId, int sampleFormat);
     device(const device&) = delete;
     void operator=(const device&) = delete;
 
