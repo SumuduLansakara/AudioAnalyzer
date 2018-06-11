@@ -19,7 +19,7 @@ void demo_player()
     player.start();
 
     cout << "playing for " << seconds << " seconds" << endl;
-    Pa_Sleep(seconds * 1000);
+    Pa_Sleep(seconds * 1000 * 60 * 10);
 
     player.stop();
     player.close();
