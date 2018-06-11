@@ -40,8 +40,8 @@ void spectrum_analyzer::analyze_buffer(const double * inputBuffer,
     (void) timeInfo;
     (void) statusFlags;
     for (unsigned int i = 0; i < mFramesPerBuffer; i += mWindowLength) {
-        // DEBUG_BUFFER(0, buffer, i, fft_window_length);
-        analyze_window(0, inputBuffer, i, mWindowLength);
+        debug_print_window(0, inputBuffer, i, mWindowLength);
+        //analyze_window(0, inputBuffer, i, mWindowLength);
     }
 }
 
@@ -72,7 +72,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const double* buffe
     cout << high_index << " " << (high_index * binSize) << endl;
 }
 
-void spectrum_analyzer::DEBUG_BUFFER(unsigned int channel, float* buffer, unsigned int start_index, unsigned int len)
+void spectrum_analyzer::debug_print_window(unsigned int channel, const double* buffer, unsigned int start_index, unsigned int len)
 {
     double sum = 0;
     float minimum = 999999;

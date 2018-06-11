@@ -20,7 +20,7 @@ public:
     void analyze_window(unsigned int channel, const double* buffer, unsigned int start_id, unsigned int len);
 
 private:
-    void DEBUG_BUFFER(unsigned int channel, float* buffer, unsigned int start_index, unsigned int len);
+    void debug_print_window(unsigned int channel, const double* buffer, unsigned int start_index, unsigned int len);
 
     const unsigned int mChannels;
     const double mSampleRate;
