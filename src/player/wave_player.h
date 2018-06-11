@@ -2,8 +2,7 @@
 
 class device;
 
-class wave_player
-{
+class wave_player {
 public:
     wave_player(unsigned int channels, double sample_rate, double frequency);
     wave_player(const wave_player& orig) = delete;
@@ -22,14 +21,14 @@ private:
     void on_stream_finish();
 
     static int stream_data_callback(const void *inputBuffer, void *outputBuffer,
-                                    unsigned long framesPerBuffer,
-                                    const PaStreamCallbackTimeInfo* timeInfo,
-                                    PaStreamCallbackFlags statusFlags,
-                                    void *userData);
+            unsigned long framesPerBuffer,
+            const PaStreamCallbackTimeInfo* timeInfo,
+            PaStreamCallbackFlags statusFlags,
+            void *userData);
     int on_stream_data(const void *inputBuffer, void *outputBuffer,
-                       unsigned long framesPerBuffer,
-                       const PaStreamCallbackTimeInfo* timeInfo,
-                       PaStreamCallbackFlags statusFlags);
+            unsigned long framesPerBuffer,
+            const PaStreamCallbackTimeInfo* timeInfo,
+            PaStreamCallbackFlags statusFlags);
 
     const unsigned int mChannels;
     const double mSampleRate;

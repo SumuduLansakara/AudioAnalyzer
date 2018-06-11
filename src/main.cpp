@@ -7,7 +7,7 @@ using std::endl;
 
 int main(int, char**)
 {
-    device_manager* devMan{device_manager::get_instance()};
+    device_manager * devMan{device_manager::get_instance()};
     devMan->load_devices(paFloat32);
 
     auto defaultOutputDevice{devMan->default_output_device()};

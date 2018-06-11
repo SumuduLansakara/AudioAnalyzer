@@ -68,7 +68,7 @@ void device_manager::load_devices(int sampleFormat)
     const int defaultInputDeviceId{Pa_GetDefaultInputDevice()};
     const int defaultOutputDeviceId{Pa_GetDefaultOutputDevice()};
     for (int i{0}; i < mDeviceCount; ++i) {
-        device* dev{new device(i, sampleFormat)};
+        device * dev{new device(i, sampleFormat)};
         mDevices.push_back(dev);
         if (i == defaultInputDeviceId) {
             mDefaultInputDevice = dev;

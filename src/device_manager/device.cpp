@@ -107,9 +107,8 @@ void device::load_sample_rates()
     mFullDuplexSampleRates = get_supported_sample_rates(&mInputParams, &mOutputParams);
 }
 
-vector<double> device::get_supported_sample_rates(
-        const PaStreamParameters *inputParams,
-        const PaStreamParameters *outputParams) const
+vector<double> device::get_supported_sample_rates(const PaStreamParameters *inputParams,
+                                                  const PaStreamParameters *outputParams) const
 {
     vector<double> supportedSampleRates;
     for (double sr : STANDARD_SAMPLE_RATES) {

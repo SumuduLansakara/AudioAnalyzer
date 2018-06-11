@@ -40,15 +40,15 @@ void wave_player::setup_stream(device* outputDevice)
     outputParameters.hostApiSpecificStreamInfo = nullptr;
 
     PaError err{Pa_OpenStream(
-        &mStream,
-        nullptr, /* no input */
-        &outputParameters,
-        mSampleRate,
-        paFramesPerBufferUnspecified,
-        paClipOff,
-        &wave_player::stream_data_callback,
-        this
-        )};
+                              &mStream,
+                              nullptr, /* no input */
+                              &outputParameters,
+                              mSampleRate,
+                              paFramesPerBufferUnspecified,
+                              paClipOff,
+                              &wave_player::stream_data_callback,
+                              this
+                              )};
     device_manager::get_instance()->check_error(err);
 
     err = Pa_SetStreamFinishedCallback(mStream, &wave_player::stream_finished_callback);
@@ -86,10 +86,10 @@ void wave_player::stop()
 }
 
 int wave_player::on_stream_data(const void *inputBuffer,
-        void *outputBuffer,
-        unsigned long framesPerBuffer,
-        const PaStreamCallbackTimeInfo* timeInfo,
-        PaStreamCallbackFlags statusFlags)
+                                void *outputBuffer,
+                                unsigned long framesPerBuffer,
+                                const PaStreamCallbackTimeInfo* timeInfo,
+                                PaStreamCallbackFlags statusFlags)
 {
     float *out{(float*) outputBuffer};
 
@@ -109,13 +109,13 @@ int wave_player::on_stream_data(const void *inputBuffer,
 }
 
 int wave_player::stream_data_callback(const void *inputBuffer, void *outputBuffer,
-        unsigned long framesPerBuffer,
-        const PaStreamCallbackTimeInfo* timeInfo,
-        PaStreamCallbackFlags statusFlags,
-        void *userData)
+                                      unsigned long framesPerBuffer,
+                                      const PaStreamCallbackTimeInfo* timeInfo,
+                                      PaStreamCallbackFlags statusFlags,
+                                      void *userData)
 {
     return ((wave_player*) userData)->on_stream_data(inputBuffer,
-            outputBuffer, framesPerBuffer, timeInfo, statusFlags);
+                                                     outputBuffer, framesPerBuffer, timeInfo, statusFlags);
 }
 
 void wave_player::stream_finished_callback(void* userData)

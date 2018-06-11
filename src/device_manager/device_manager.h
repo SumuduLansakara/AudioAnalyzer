@@ -3,8 +3,7 @@
 #include <portaudio.h>
 #include "device.h"
 
-class device_manager
-{
+class device_manager {
 public:
     static device_manager* get_instance();
 
@@ -15,23 +14,19 @@ public:
     void load_devices(int sampleFormat);
     void check_error(PaError err);
 
-    int device_count() const
-    {
+    int device_count() const {
         return mDeviceCount;
     }
 
-    device* default_input_device() const
-    {
+    device* default_input_device() const {
         return mDefaultInputDevice;
     }
 
-    device* default_output_device() const
-    {
+    device* default_output_device() const {
         return mDefaultOutputDevice;
     }
 
-    std::vector<device*> devices() const
-    {
+    std::vector<device*> devices() const {
         return mDevices;
     }
 
