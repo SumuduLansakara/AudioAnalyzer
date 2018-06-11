@@ -1,5 +1,5 @@
 #include <iostream>
-#include "device_manager.h"
+#include "device_manager/device_manager.h"
 #include "player/sine_wave_player.h"
 
 using std::cout;

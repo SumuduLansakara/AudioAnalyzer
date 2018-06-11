@@ -2,8 +2,8 @@
 #include <iostream>
 #include <portaudio.h>
 
-#include "device.h"
-#include "device_manager.h"
+#include "device_manager/device.h"
+#include "device_manager/device_manager.h"
 #include "wave_player.h"
 
 using std::cout;
