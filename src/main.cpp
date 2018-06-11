@@ -14,12 +14,11 @@ void demo_player()
     defaultOutputDevice->debug_print();
 
     sine_wave_player player{2, defaultOutputDevice->default_sample_rate(), paFloat32, 440};
-    const unsigned int seconds{5};
     player.setup_stream(defaultOutputDevice);
     player.start();
 
-    cout << "playing for " << seconds << " seconds" << endl;
-    Pa_Sleep(seconds * 1000 * 60 * 10);
+    cout << "playing... press Enter to exit" << endl;
+    std::cin.get();
 
     player.stop();
     player.close();
@@ -38,7 +37,9 @@ void demo_listener()
     listener.setup_stream(defaultInputDevice, &analyzer);
 
     listener.start();
-    device_manager::get_instance()->sleep_millis(5000);
+    cout << "listening... press Enter to exit" << endl;
+    std::cin.get();
+
     listener.close();
     cout << "listening finished" << endl;
 }
