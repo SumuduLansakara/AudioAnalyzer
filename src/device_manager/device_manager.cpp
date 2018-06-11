@@ -63,7 +63,16 @@ void device_manager::check_error(PaError err)
     }
 }
 
-void device_manager::load_devices(int sampleFormat)
+void device_manager::load_default_devices(int sampleFormat)
+{
+    if (not mDevices.empty()) {
+        return;
+    }
+    mDefaultInputDevice = new device{Pa_GetDefaultInputDevice(), sampleFormat};
+    mDefaultOutputDevice = new device{Pa_GetDefaultOutputDevice(), sampleFormat};
+}
+
+void device_manager::load_all_devices(int sampleFormat)
 {
     const int defaultInputDeviceId{Pa_GetDefaultInputDevice()};
     const int defaultOutputDeviceId{Pa_GetDefaultOutputDevice()};

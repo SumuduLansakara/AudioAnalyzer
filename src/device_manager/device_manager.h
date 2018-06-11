@@ -11,7 +11,8 @@ public:
     void operator=(const device_manager&) = delete;
     ~device_manager();
 
-    void load_devices(int sampleFormat);
+    void load_default_devices(int sampleFormat);
+    void load_all_devices(int sampleFormat);
     void check_error(PaError err);
 
     int device_count() const {

@@ -1,12 +1,12 @@
 #pragma once
 #include <cmath>
 
-#include "wave_player.h"
+#include "audio_player.h"
 
-class sine_wave_player : public wave_player {
+class sine_wave_player : public audio_player {
 public:
-    sine_wave_player(unsigned int channels, double sampleRate, double frequency) :
-    wave_player{channels, sampleRate, frequency}
+    sine_wave_player(unsigned int channels, double sampleRate, int sampleFormat, double frequency) :
+    audio_player{channels, sampleRate, sampleFormat, frequency}
     {
     }
 
