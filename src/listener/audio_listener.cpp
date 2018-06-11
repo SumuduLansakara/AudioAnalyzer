@@ -1,4 +1,5 @@
 #include <iostream>
+#include "analyzer/analyzer.h"
 #include "audio_listener.h"
 #include "device_manager/device_manager.h"
 
@@ -7,7 +8,8 @@ using std::endl;
 
 audio_listener::audio_listener(unsigned int channels, double sampleRate, int sampleFormat,
                                unsigned long framesPerBuffer) :
-audio_stream(channels, sampleRate, sampleFormat), mFramesPerBuffer{framesPerBuffer}
+audio_stream(channels, sampleRate, sampleFormat), mFramesPerBuffer{framesPerBuffer},
+pAnalyzer{nullptr}
 {
 }
 
@@ -15,8 +17,9 @@ audio_listener::~audio_listener()
 {
 }
 
-void audio_listener::setup_stream(device* inputDevice)
+void audio_listener::setup_stream(device* inputDevice, spectrum_analyzer* analyzer)
 {
+    pAnalyzer = analyzer;
     PaStreamParameters inputParameters{inputDevice->input_parameters()};
     inputParameters.channelCount = mChannels;
     inputParameters.sampleFormat = mSampleFormat;
@@ -46,24 +49,18 @@ int audio_listener::listen_callback(const void *inputBuffer, void *outputBuffer,
                                     PaStreamCallbackFlags statusFlags,
                                     void *userData)
 {
-    cout << "!!!" << endl << std::flush;
     (void) outputBuffer;
-    return static_cast<audio_listener*> (userData)->on_listen(static_cast<const float*> (inputBuffer),
+    return static_cast<audio_listener*> (userData)->on_listen(static_cast<const double*> (inputBuffer),
                                                               framesPerBuffer, timeInfo,
                                                               statusFlags);
 }
 
-int audio_listener::on_listen(const float * inputBuffer,
+int audio_listener::on_listen(const double * inputBuffer,
                               unsigned long framesPerBuffer,
                               const PaStreamCallbackTimeInfo* timeInfo,
                               PaStreamCallbackFlags statusFlags)
 {
-    (void) timeInfo;
-    (void) statusFlags;
-    for (unsigned int i{0}; i < framesPerBuffer; ++i) {
-        cout << inputBuffer[i] << " ";
-    }
-    cout << endl;
+    pAnalyzer->analyze_buffer(inputBuffer, framesPerBuffer, timeInfo, statusFlags);
 
     //    paTestData *data = (paTestData*) userData;
     //    const SAMPLE *rptr = (const SAMPLE*) inputBuffer;
