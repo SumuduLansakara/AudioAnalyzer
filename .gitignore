@@ -1,3 +1,5 @@
 *.o
 nbproject/
 build/
+deps/
+temp/
