@@ -5,8 +5,8 @@
 
 class sine_wave_player : public audio_player {
 public:
-    sine_wave_player(unsigned int channels, double sampleRate, int sampleFormat, double frequency) :
-    audio_player{channels, sampleRate, sampleFormat, frequency}
+    sine_wave_player(unsigned int channels, double sampleRate, int sampleFormat, unsigned long framesPerBuffer, double frequency) :
+    audio_player{channels, sampleRate, sampleFormat, framesPerBuffer, frequency}
     {
     }
 

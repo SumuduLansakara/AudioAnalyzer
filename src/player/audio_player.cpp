@@ -10,10 +10,9 @@ using std::cout;
 using std::endl;
 
 audio_player::audio_player(unsigned int channels, const double sampleRate, int sampleFormat,
-                         double frequency) :
-audio_stream(channels, sampleRate, sampleFormat), mFrequency{frequency}, mPhase{0},
-mTableLength{static_cast<int> (sampleRate / frequency)},
-mTable{new float[mTableLength]}
+                           unsigned long framesPerBuffer, double frequency) :
+audio_stream(channels, sampleRate, sampleFormat, framesPerBuffer), mFrequency{frequency}, mPhase{0},
+mTableLength{static_cast<int> (sampleRate / frequency)}, mTable{new float[mTableLength]}
 {
 }
 
@@ -36,17 +35,12 @@ void audio_player::setup_stream(device* outputDevice)
 
     PaStreamParameters outputParameters{outputDevice->output_parameters()};
     outputParameters.channelCount = mChannels;
+    outputParameters.sampleFormat = mSampleFormat;
     outputParameters.suggestedLatency = outputDevice->default_low_output_latency();
     outputParameters.hostApiSpecificStreamInfo = nullptr;
 
-    PaError err{Pa_OpenStream(&mStream,
-                              nullptr, /* no input */
-                              &outputParameters,
-                              mSampleRate,
-                              paFramesPerBufferUnspecified,
-                              paClipOff,
-                              &audio_player::play_callback,
-                              this)};
+    PaError err{Pa_OpenStream(&mStream, nullptr, &outputParameters, mSampleRate, mFramesPerBuffer, paClipOff,
+                              &audio_player::play_callback, this)};
     device_manager::get_instance()->check_error(err);
 
     err = Pa_SetStreamFinishedCallback(mStream, &audio_player::play_finished_callback);
@@ -56,21 +50,15 @@ void audio_player::setup_stream(device* outputDevice)
     }
 }
 
-int audio_player::on_play(const void *inputBuffer,
-                         void *outputBuffer,
-                         unsigned long framesPerBuffer,
-                         const PaStreamCallbackTimeInfo* timeInfo,
-                         PaStreamCallbackFlags statusFlags)
+int audio_player::on_play(float *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
+                          PaStreamCallbackFlags statusFlags)
 {
-    float *out{(float*) outputBuffer};
-
     (void) timeInfo;
     (void) statusFlags;
-    (void) inputBuffer;
 
     for (unsigned long i{0}; i < framesPerBuffer; i++) {
         for (unsigned int c{0}; c < mChannels; ++c) {
-            *out++ = mTable[mPhase];
+            *outputBuffer++ = mTable[mPhase];
         }
         mPhase += 1;
         if (mPhase >= mTableLength) mPhase -= mTableLength;
@@ -79,14 +67,12 @@ int audio_player::on_play(const void *inputBuffer,
     return paContinue;
 }
 
-int audio_player::play_callback(const void *inputBuffer, void *outputBuffer,
-                               unsigned long framesPerBuffer,
-                               const PaStreamCallbackTimeInfo* timeInfo,
-                               PaStreamCallbackFlags statusFlags,
-                               void *userData)
+int audio_player::play_callback(const void *, void *outputBuffer, unsigned long framesPerBuffer,
+                                const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags,
+                                void *userData)
 {
-    return static_cast<audio_player*> (userData)->on_play(inputBuffer, outputBuffer,
-                                                         framesPerBuffer, timeInfo, statusFlags);
+    return static_cast<audio_player*> (userData)->on_play(static_cast<float*> (outputBuffer), framesPerBuffer,
+                                                          timeInfo, statusFlags);
 }
 
 void audio_player::play_finished_callback(void* userData)

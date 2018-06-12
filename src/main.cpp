@@ -15,7 +15,9 @@ void demo_player(double frequency)
     cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
-    sine_wave_player player{2, defaultOutputDevice->default_sample_rate(), paFloat32, frequency};
+    unsigned int channels = 2;
+    unsigned long framesPerBuffer = 1024;
+    sine_wave_player player{channels, defaultOutputDevice->default_sample_rate(), paFloat32, framesPerBuffer, frequency};
     player.setup_stream(defaultOutputDevice);
     player.start();
 
@@ -34,9 +36,9 @@ void demo_non_blocking_listener()
     unsigned int channels = 2;
     unsigned long framesPerBuffer = 1024;
     unsigned int fftWindowLength = 1024;
-    spectrum_analyzer analyzer{channels, defaultInputDevice->default_sample_rate(), framesPerBuffer, fftWindowLength};
     audio_listener listener{channels, defaultInputDevice->default_sample_rate(), paFloat32, framesPerBuffer};
 
+    spectrum_analyzer analyzer{channels, defaultInputDevice->default_sample_rate(), framesPerBuffer, fftWindowLength};
     listener.setup_non_blocking_stream(defaultInputDevice, &analyzer);
     listener.start();
     cout << "press Enter to exit..." << endl;

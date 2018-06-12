@@ -4,7 +4,7 @@
 
 class audio_stream {
 public:
-    audio_stream(unsigned int channels, double sampleRate, int sampleFormat);
+    audio_stream(unsigned int channels, double sampleRate, int sampleFormat, unsigned long framesPerBuffer);
     audio_stream(const audio_stream& orig) = delete;
     void operator=(const audio_stream& orig) = delete;
     virtual ~audio_stream();
@@ -19,5 +19,6 @@ protected:
     const unsigned int mChannels;
     const double mSampleRate;
     const int mSampleFormat;
+    const unsigned long mFramesPerBuffer;
     PaStream *mStream;
 };

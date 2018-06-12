@@ -8,8 +8,7 @@ using std::endl;
 
 audio_listener::audio_listener(unsigned int channels, double sampleRate, int sampleFormat,
                                unsigned long framesPerBuffer) :
-audio_stream(channels, sampleRate, sampleFormat), mFramesPerBuffer{framesPerBuffer},
-pAnalyzer{nullptr}
+audio_stream(channels, sampleRate, sampleFormat, framesPerBuffer), pAnalyzer{nullptr}
 {
 }
 
