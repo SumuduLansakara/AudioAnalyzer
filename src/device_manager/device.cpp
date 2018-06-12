@@ -19,30 +19,6 @@ void device::debug_print() const
     cout << "max output channels: " << mMaxOutputChannels << endl;
     cout << "default low output latency: " << mDefaultLowOutputLatency << endl;
     cout << "default high output latency: " << mDefaultHighOutputLatency << endl;
-
-    if (not mHalfDuplexInputSampleRates.empty()) {
-        cout << "half duplex input sample rates:" << endl;
-        for (double sr : mHalfDuplexInputSampleRates) {
-            cout << sr << " ";
-        }
-        cout << endl;
-    }
-
-    if (not mHalfDuplexOutputSampleRates.empty()) {
-        cout << "half duplex output sample rates:" << endl;
-        for (double sr : mHalfDuplexOutputSampleRates) {
-            cout << sr << " ";
-        }
-        cout << endl;
-    }
-
-    if (not mFullDuplexSampleRates.empty()) {
-        cout << "full duplex sample rates:" << endl;
-        for (double sr : mFullDuplexSampleRates) {
-            cout << sr << " ";
-        }
-        cout << endl;
-    }
 }
 
 const double device::STANDARD_SAMPLE_RATES[] = {
@@ -63,13 +39,9 @@ mDefaultLowInputLatency{},
 mDefaultHighInputLatency{},
 mMaxOutputChannels{},
 mDefaultLowOutputLatency{},
-mDefaultHighOutputLatency{},
-mHalfDuplexInputSampleRates{},
-mHalfDuplexOutputSampleRates{},
-mFullDuplexSampleRates{}
+mDefaultHighOutputLatency{}
 {
     load_device();
-    load_sample_rates();
 }
 
 void device::load_device()
@@ -86,25 +58,6 @@ void device::load_device()
     mMaxOutputChannels = info->maxOutputChannels;
     mDefaultLowOutputLatency = info->defaultLowOutputLatency;
     mDefaultHighOutputLatency = info->defaultHighOutputLatency;
-}
-
-void device::load_sample_rates()
-{
-    mInputParams.device = mDeviceIndex;
-    mInputParams.channelCount = mMaxInputChannels;
-    mInputParams.sampleFormat = mSampleFormat;
-    mInputParams.suggestedLatency = 0;
-    mInputParams.hostApiSpecificStreamInfo = nullptr;
-
-    mOutputParams.device = mDeviceIndex;
-    mOutputParams.channelCount = mMaxOutputChannels;
-    mOutputParams.sampleFormat = mSampleFormat;
-    mOutputParams.suggestedLatency = 0;
-    mOutputParams.hostApiSpecificStreamInfo = nullptr;
-
-    mHalfDuplexInputSampleRates = get_supported_sample_rates(&mInputParams, nullptr);
-    mHalfDuplexOutputSampleRates = get_supported_sample_rates(nullptr, &mOutputParams);
-    mFullDuplexSampleRates = get_supported_sample_rates(&mInputParams, &mOutputParams);
 }
 
 vector<double> device::get_supported_sample_rates(const PaStreamParameters *inputParams,

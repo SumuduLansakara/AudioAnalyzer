@@ -24,7 +24,7 @@ void demo_player()
     player.close();
 }
 
-void demo_listener()
+void demo_non_blocking_listener()
 {
     cout << "start listening..." << endl << std::flush;
     device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
@@ -34,14 +34,30 @@ void demo_listener()
     unsigned int fftWindowLength = 1024;
     spectrum_analyzer analyzer{channels, defaultInputDevice->default_sample_rate(), framesPerBuffer, fftWindowLength};
     audio_listener listener{channels, defaultInputDevice->default_sample_rate(), paFloat32, framesPerBuffer};
-    listener.setup_stream(defaultInputDevice, &analyzer);
 
+    listener.setup_non_blocking_stream(defaultInputDevice, &analyzer);
     listener.start();
-    cout << "listening... press Enter to exit" << endl;
+    cout << "press Enter to exit..." << endl;
     std::cin.get();
 
     listener.close();
     cout << "listening finished" << endl;
+}
+
+void demo_blocking_listener()
+{
+    cout << "start listening..." << endl << std::flush;
+    device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
+
+    unsigned int channels = 2;
+    unsigned long framesPerBuffer = 1024;
+    unsigned int fftWindowLength = 1024;
+    spectrum_analyzer analyzer{channels, defaultInputDevice->default_sample_rate(), framesPerBuffer, fftWindowLength};
+    audio_listener listener{channels, defaultInputDevice->default_sample_rate(), paFloat32, framesPerBuffer};
+
+    listener.setup_blocking_stream(defaultInputDevice, &analyzer);
+    cout << "entering blocking listen loop" << endl;
+    listener.start_blocking_listen_loop();
 }
 
 int main(int, char**)
@@ -51,7 +67,7 @@ int main(int, char**)
     devMan->load_default_devices(paFloat32);
 
     // demo_player();
-    demo_listener();
+    demo_non_blocking_listener();
 
     return 0;
 }

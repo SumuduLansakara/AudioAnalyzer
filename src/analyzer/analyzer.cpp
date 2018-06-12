@@ -11,8 +11,8 @@ using std::endl;
 spectrum_analyzer::spectrum_analyzer(unsigned int channels, double sampleRate,
                                      unsigned long framesPerBuffer, unsigned int windowLength) :
 mChannels{channels}, mSampleRate{sampleRate}, mFramesPerBuffer{framesPerBuffer},
-mWindowLength{windowLength}, mShapingWindow{new double[mWindowLength]},
-mInput{static_cast<double*> (fftw_malloc(sizeof (double)*mWindowLength))},
+mWindowLength{windowLength}, mShapingWindow{new float[mWindowLength]},
+mInput{static_cast<sampleType*> (fftw_malloc(sizeof (sampleType)*mWindowLength))},
 mOutput{static_cast<fftw_complex*> (fftw_malloc(sizeof (fftw_complex) * mWindowLength))},
 mFFTPlan{fftw_plan_dft_r2c_1d(mWindowLength, mInput, mOutput, FFTW_ESTIMATE)}
 {
@@ -31,7 +31,7 @@ unsigned int spectrum_analyzer::get_real_index(unsigned int index, unsigned int 
     return (index * mChannels) +channel;
 }
 
-void spectrum_analyzer::analyze_buffer(const double * inputBuffer,
+void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
                                        unsigned long framesPerBuffer,
                                        const PaStreamCallbackTimeInfo* timeInfo,
                                        PaStreamCallbackFlags statusFlags)
@@ -40,15 +40,16 @@ void spectrum_analyzer::analyze_buffer(const double * inputBuffer,
     (void) timeInfo;
     (void) statusFlags;
     for (unsigned int i = 0; i < mFramesPerBuffer; i += mWindowLength) {
-        debug_print_window(0, inputBuffer, i, mWindowLength);
-        //analyze_window(0, inputBuffer, i, mWindowLength);
+        //debug_print_window(0, inputBuffer, i, mWindowLength);
+        analyze_window(0, inputBuffer, i, mWindowLength);
     }
 }
 
-void spectrum_analyzer::analyze_window(unsigned int channel, const double* buffer, unsigned int start_id, unsigned int len)
+void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer, unsigned int start_id,
+                                       unsigned int len)
 {
     for (unsigned int i{0}; i < len; ++i) {
-        const double sample = buffer[get_real_index(i + start_id, channel)];
+        const float sample = buffer[get_real_index(i + start_id, channel)];
         mInput[i] = sample * mShapingWindow[i];
     }
 
@@ -72,13 +73,13 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const double* buffe
     cout << high_index << " " << (high_index * binSize) << endl;
 }
 
-void spectrum_analyzer::debug_print_window(unsigned int channel, const double* buffer, unsigned int start_index, unsigned int len)
+void spectrum_analyzer::debug_print_window(unsigned int channel, const float* buffer, unsigned int start_index, unsigned int len)
 {
-    double sum = 0;
-    double minimum = 999999;
-    double maximum = -999999;
+    float sum = 0;
+    float minimum = 999999;
+    float maximum = -999999;
     for (unsigned int i = start_index; i < start_index + len; ++i) {
-        const double sample = buffer[get_real_index(i, channel)];
+        const float sample = buffer[get_real_index(i, channel)];
         minimum = std::min(minimum, sample);
         maximum = std::max(maximum, sample);
         sum += sample;

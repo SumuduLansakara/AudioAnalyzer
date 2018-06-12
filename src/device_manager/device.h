@@ -52,26 +52,13 @@ public:
         return mDefaultHighOutputLatency;
     }
 
-    const std::vector<double> half_duplex_input_sample_rates() const {
-        return mHalfDuplexInputSampleRates;
-    }
+    std::vector<double> get_supported_sample_rates(const PaStreamParameters*, const PaStreamParameters*) const;
 
-    const std::vector<double> half_duplex_output_sample_rates() const {
-        return mHalfDuplexOutputSampleRates;
-    }
-
-    const std::vector<double> full_duplex_sample_rates() const {
-        return mFullDuplexSampleRates;
-    }
 
     void debug_print() const;
 
 private:
     void load_device();
-    void load_sample_rates();
-
-    std::vector<double> get_supported_sample_rates(const PaStreamParameters*,
-            const PaStreamParameters*) const;
 
     static const double STANDARD_SAMPLE_RATES[];
 
@@ -92,9 +79,5 @@ private:
     int mMaxOutputChannels;
     double mDefaultLowOutputLatency;
     double mDefaultHighOutputLatency;
-
-    std::vector<double> mHalfDuplexInputSampleRates;
-    std::vector<double> mHalfDuplexOutputSampleRates;
-    std::vector<double> mFullDuplexSampleRates;
 };
 

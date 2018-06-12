@@ -13,7 +13,10 @@ public:
     void operator=(const audio_listener& orig) = delete;
     virtual ~audio_listener();
 
-    void setup_stream(device* inputDevice, spectrum_analyzer* analyzer);
+    void setup_non_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer);
+
+    void setup_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer);
+    void start_blocking_listen_loop();
 
     bool is_listening() const;
 
@@ -24,7 +27,7 @@ private:
             PaStreamCallbackFlags statusFlags,
             void *userData);
 
-    int on_listen(const double * inputBuffer, unsigned long framesPerBuffer,
+    int on_listen(const float* inputBuffer, unsigned long framesPerBuffer,
             const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags);
 
     static void listen_finished_callback(void* userData);
