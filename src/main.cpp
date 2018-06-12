@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include "device_manager/device_manager.h"
 #include "player/sine_wave_player.h"
 #include "listener/audio_listener.h"
@@ -6,14 +7,15 @@
 
 using std::cout;
 using std::endl;
+using std::string;
 
-void demo_player()
+void demo_player(double frequency)
 {
     device * defaultOutputDevice{device_manager::get_instance()->default_output_device()};
     cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
-    sine_wave_player player{2, defaultOutputDevice->default_sample_rate(), paFloat32, 440};
+    sine_wave_player player{2, defaultOutputDevice->default_sample_rate(), paFloat32, frequency};
     player.setup_stream(defaultOutputDevice);
     player.start();
 
@@ -60,14 +62,47 @@ void demo_blocking_listener()
     listener.start_blocking_listen_loop();
 }
 
-int main(int, char**)
+void print_usage(const string& binary_path)
 {
+    cout << "Usage:" << endl;
+    cout << "\t" << binary_path << " p[lay]|l[isten]" << endl;
+}
+
+int main(int argc, char** argv)
+{
+    char run_mode = '\0';
+    float gen_frequency{440};
+    if (argc > 1) {
+        const string & mode{argv[1]};
+        if (mode == "play" || mode == "p") {
+            run_mode = 'p';
+            if (argc > 2) {
+                gen_frequency = atoi(argv[2]);
+            }
+        }
+        else if (mode == "listen" || mode == "l") {
+            run_mode = 'l';
+        }
+    }
+    if (run_mode == '\0') {
+        cout << "invalid run mode!" << endl;
+        print_usage(argv[0]);
+        exit(-1);
+    }
+
     device_manager * devMan{device_manager::get_instance()};
     //devMan->load_all_devices(paFloat32);
     devMan->load_default_devices(paFloat32);
+    switch (run_mode) {
+    case 'p':
+        cout << "starting generator [" << gen_frequency << " Hz]" << endl;
+        demo_player(gen_frequency);
+        break;
+    case 'l':
+        demo_non_blocking_listener();
+        break;
 
-    // demo_player();
-    demo_non_blocking_listener();
+    }
 
     return 0;
 }
