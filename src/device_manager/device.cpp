@@ -26,9 +26,8 @@ const double device::STANDARD_SAMPLE_RATES[] = {
     44100.0, 48000.0, 88200.0, 96000.0, 192000.0
 };
 
-device::device(int deviceId, int sampleFormat) :
+device::device(int deviceId) :
 mDeviceIndex{deviceId},
-mSampleFormat{sampleFormat},
 mName{},
 mHostApi{},
 mDefaultSampleRate{},

@@ -92,9 +92,7 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    device_manager * devMan{device_manager::get_instance()};
-    //devMan->load_all_devices(paFloat32);
-    devMan->load_default_devices(paFloat32);
+    device_manager::get_instance();
     switch (run_mode) {
     case 'p':
         cout << "starting generator [" << gen_frequency << " Hz]" << endl;
@@ -103,8 +101,6 @@ int main(int argc, char** argv)
     case 'l':
         demo_non_blocking_listener();
         break;
-
     }
-
     return 0;
 }

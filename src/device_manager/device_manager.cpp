@@ -13,20 +13,6 @@ using std::cerr;
 using std::endl;
 using std::vector;
 
-void device_manager::debug_print() const
-{
-    cout << "******************************" << endl;
-    cout << "PortAudio v." << Pa_GetVersion() << endl;
-    cout << "[" << Pa_GetVersionInfo()->versionText << "]" << endl;
-    cout << "Device count: " << mDeviceCount << endl;
-
-    for (device* d : mDevices) {
-        cout << endl;
-        d->debug_print();
-    }
-    cout << "******************************" << endl;
-}
-
 device_manager* device_manager::sInstance{nullptr};
 
 device_manager* device_manager::get_instance()
@@ -37,9 +23,7 @@ device_manager* device_manager::get_instance()
     return sInstance;
 }
 
-device_manager::device_manager() :
-mError(Pa_Initialize()), mDeviceCount{Pa_GetDeviceCount()},
-mDefaultInputDevice{nullptr}, mDefaultOutputDevice{nullptr}, mDevices{}
+device_manager::device_manager() : mError(Pa_Initialize()), mDeviceCount{Pa_GetDeviceCount()}
 {
     check_error(mError);
 }
@@ -68,36 +52,20 @@ void device_manager::sleep_millis(long milliSecs) const
     Pa_Sleep(milliSecs);
 }
 
-void device_manager::load_default_devices(int sampleFormat)
+std::vector<device*> device_manager::get_all_devices() const
 {
-    if (not mDevices.empty()) {
-        return;
-    }
-    mDefaultInputDevice = make_device(Pa_GetDefaultInputDevice(), sampleFormat);
-    mDefaultOutputDevice = make_device(Pa_GetDefaultOutputDevice(), sampleFormat);
-}
-
-void device_manager::load_all_devices(int sampleFormat)
-{
-    const int defaultInputDeviceId{Pa_GetDefaultInputDevice()};
-    const int defaultOutputDeviceId{Pa_GetDefaultOutputDevice()};
+    std::vector<device*> devices;
     for (int i{0}; i < mDeviceCount; ++i) {
-        device * dev{make_device(i, sampleFormat)};
-        mDevices.push_back(dev);
-        if (i == defaultInputDeviceId) {
-            mDefaultInputDevice = dev;
-        }
-        if (i == defaultOutputDeviceId) {
-            mDefaultOutputDevice = dev;
-        }
+        devices.push_back(make_device(i));
     }
+    return devices;
 }
 
-device* device_manager::make_device(int deviceId, int sampleFormat) const
+device* device_manager::make_device(int deviceId) const
 {
     if (deviceId < 0) {
         cout << "invalid device id " << deviceId << endl;
         return nullptr;
     }
-    return new device(deviceId, sampleFormat);
+    return new device(deviceId);
 }

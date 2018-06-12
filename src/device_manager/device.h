@@ -8,7 +8,7 @@ class PaStreamParameters;
 
 class device {
 public:
-    device(int deviceId, int sampleFormat);
+    device(int deviceId);
     device(const device&) = delete;
     void operator=(const device&) = delete;
 
@@ -63,7 +63,6 @@ private:
     static const double STANDARD_SAMPLE_RATES[];
 
     const int mDeviceIndex;
-    const int mSampleFormat;
 
     std::string mName;
     std::string mHostApi;
