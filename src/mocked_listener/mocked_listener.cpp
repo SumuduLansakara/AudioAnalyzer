@@ -3,12 +3,15 @@
 #include "mocked_listener.h"
 #include "device_manager/device_manager.h"
 
+#define MOCK_INPUT_FREQUENCY 720
+
 using std::cout;
 using std::endl;
 
 mocked_listener::mocked_listener(unsigned int channels, double sampleRate, int sampleFormat,
-                               unsigned long framesPerBuffer) :
-audio_stream(channels, sampleRate, sampleFormat, framesPerBuffer), pAnalyzer{nullptr}
+                                 unsigned long framesPerBuffer) :
+audio_stream(channels, sampleRate, sampleFormat, framesPerBuffer), pAnalyzer{nullptr},
+mPlayer{channels, sampleRate, paFloat32, framesPerBuffer, MOCK_INPUT_FREQUENCY}, pFakeInputBuffer{new float[framesPerBuffer *channels]}
 {
 }
 
@@ -72,10 +75,10 @@ void mocked_listener::start_blocking_listen_loop()
 }
 
 int mocked_listener::listen_callback(const void *inputBuffer, void *outputBuffer,
-                                    unsigned long framesPerBuffer,
-                                    const PaStreamCallbackTimeInfo* timeInfo,
-                                    PaStreamCallbackFlags statusFlags,
-                                    void *userData)
+                                     unsigned long framesPerBuffer,
+                                     const PaStreamCallbackTimeInfo* timeInfo,
+                                     PaStreamCallbackFlags statusFlags,
+                                     void *userData)
 {
 
     (void) outputBuffer;
@@ -83,11 +86,13 @@ int mocked_listener::listen_callback(const void *inputBuffer, void *outputBuffer
 }
 
 int mocked_listener::on_listen(const float * inputBuffer,
-                              unsigned long framesPerBuffer,
-                              const PaStreamCallbackTimeInfo* timeInfo,
-                              PaStreamCallbackFlags statusFlags)
+                               unsigned long framesPerBuffer,
+                               const PaStreamCallbackTimeInfo* timeInfo,
+                               PaStreamCallbackFlags statusFlags)
 {
-    pAnalyzer->analyze_buffer(inputBuffer, framesPerBuffer, timeInfo, statusFlags);
+    (void) inputBuffer;
+    mPlayer.on_play(pFakeInputBuffer, framesPerBuffer, timeInfo, statusFlags);
+    pAnalyzer->analyze_buffer(pFakeInputBuffer, framesPerBuffer, timeInfo, statusFlags);
     return false;
 }
 

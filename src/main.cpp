@@ -1,8 +1,16 @@
+#define MOCK
+
+#ifdef MOCK
+#include "mocked_listener/mocked_listener.h"
+#define audio_listener mocked_listener
+#else
+#include "listener/audio_listener.h"
+#endif
+
 #include <iostream>
 #include <string>
 #include "device_manager/device_manager.h"
 #include "player/sine_wave_player.h"
-#include "listener/audio_listener.h"
 #include "analyzer/analyzer.h"
 
 using std::cout;

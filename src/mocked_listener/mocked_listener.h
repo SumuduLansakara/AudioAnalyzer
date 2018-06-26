@@ -2,6 +2,7 @@
 #include <portaudio.h>
 #include "device_manager/device.h"
 #include "common/audio_stream.h"
+#include"mocked_player.h"
 
 class spectrum_analyzer;
 
@@ -31,6 +32,7 @@ private:
 
     static void listen_finished_callback(void* userData);
     void on_listen_finished();
-
     spectrum_analyzer* pAnalyzer;
+    mocked_player mPlayer;
+    float* pFakeInputBuffer;
 };
