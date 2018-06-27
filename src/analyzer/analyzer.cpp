@@ -12,7 +12,7 @@ spectrum_analyzer::spectrum_analyzer(unsigned int channels, double sampleRate,
                                      unsigned long framesPerBuffer, unsigned int windowLength) :
 mChannels{channels}, mSampleRate{sampleRate}, mFramesPerBuffer{framesPerBuffer},
 mWindowLength{windowLength}, mShapingWindow{new float[mWindowLength]},
-mInput{static_cast<sampleType*> (fftw_malloc(sizeof (sampleType)*mWindowLength))},
+mInput{static_cast<sampleType*> (fftw_malloc(sizeof (sampleType) * mWindowLength))},
 mOutput{static_cast<fftw_complex*> (fftw_malloc(sizeof (fftw_complex) * mWindowLength))},
 mFFTPlan{fftw_plan_dft_r2c_1d(mWindowLength, mInput, mOutput, FFTW_ESTIMATE)}
 {
@@ -40,7 +40,7 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
     (void) timeInfo;
     (void) statusFlags;
     for (unsigned int i = 0; i < mFramesPerBuffer; i += mWindowLength) {
-        //debug_print_window(0, inputBuffer, i, mWindowLength);
+//        debug_print_window(0, inputBuffer, i, mWindowLength);
         analyze_window(0, inputBuffer, i, mWindowLength);
     }
 }
