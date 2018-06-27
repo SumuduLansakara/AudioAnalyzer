@@ -1,6 +1,6 @@
-#define MOCK
+#define MOCK 0
 
-#ifdef MOCK
+#if MOCK
 #include "mocked_listener/mocked_listener.h"
 #define audio_listener mocked_listener
 #else
