@@ -4,20 +4,21 @@
 #include <iomanip>
 
 #include "analyzer.h"
+#include "settings.h"
 
 using std::cout;
 using std::endl;
 
-spectrum_analyzer::spectrum_analyzer(unsigned int channels, double sampleRate,
-                                     unsigned long framesPerBuffer, unsigned int windowLength) :
-mChannels{channels}, mSampleRate{sampleRate}, mFramesPerBuffer{framesPerBuffer},
-mWindowLength{windowLength}, mShapingWindow{new float[mWindowLength]},
-mInput{static_cast<sampleType*> (fftw_malloc(sizeof (sampleType) * mWindowLength))},
-mOutput{static_cast<fftw_complex*> (fftw_malloc(sizeof (fftw_complex) * mWindowLength))},
-mFFTPlan{fftw_plan_dft_r2c_1d(mWindowLength, mInput, mOutput, FFTW_ESTIMATE)}
+spectrum_analyzer::spectrum_analyzer() : mShapingWindow{new float[ANALYZER_FFT_WINDOW_LENGTH]},
+pAmplitudes{new float[ANALYZER_FFT_WINDOW_LENGTH]},
+mInput{static_cast<sampleType*> (fftw_malloc(sizeof (sampleType) * ANALYZER_FFT_WINDOW_LENGTH))},
+mOutput{static_cast<fftw_complex*> (fftw_malloc(sizeof (fftw_complex) * ANALYZER_FFT_WINDOW_LENGTH))},
+mFFTPlan{fftw_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}
 {
-    for (unsigned int i = 0; i < mWindowLength; ++i) {
-        mShapingWindow[i] = 0.5 * (1 - cos(2 * M_PI * i / (mWindowLength - 1)));
+    cout << "listener sample rate: " << LISTENER_SAMPLE_RATE << endl;
+    throw 1;
+    for (unsigned int i = 0; i < ANALYZER_FFT_WINDOW_LENGTH; ++i) {
+        mShapingWindow[i] = 0.5 * (1 - cos(2 * M_PI * i / (ANALYZER_FFT_WINDOW_LENGTH - 1)));
     }
 }
 
@@ -27,8 +28,8 @@ spectrum_analyzer::~spectrum_analyzer()
 
 unsigned int spectrum_analyzer::get_real_index(unsigned int index, unsigned int channel) const
 {
-    assert((index * mChannels) + channel < mFramesPerBuffer * mChannels);
-    return (index * mChannels) +channel;
+    assert((index * LISTENER_CHANNELS) + channel < LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS);
+    return (index * LISTENER_CHANNELS) +channel;
 }
 
 void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
@@ -39,9 +40,9 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
     (void) framesPerBuffer;
     (void) timeInfo;
     (void) statusFlags;
-    for (unsigned int i = 0; i < mFramesPerBuffer; i += mWindowLength) {
-//        debug_print_window(0, inputBuffer, i, mWindowLength);
-        analyze_window(0, inputBuffer, i, mWindowLength);
+    for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; i += ANALYZER_FFT_WINDOW_LENGTH) {
+        //        debug_print_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
+        analyze_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
     }
 }
 
@@ -55,22 +56,24 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
 
     fftw_execute(mFFTPlan);
 
-    double* amp = new double[mWindowLength];
-    // double amp_db[N];     
     unsigned int high_index = 0;
-    double high_val = -99;
-    for (unsigned int i{0}; i < mWindowLength; i++) {
-        double val = sqrt(mOutput[i][0] * mOutput[i][0] + mOutput[i][1] * mOutput[i][1]);
+    float high_val = -99;
+    for (unsigned int i{0}; i < ANALYZER_FFT_WINDOW_LENGTH; i++) {
+        float val = sqrt(mOutput[i][0] * mOutput[i][0] + mOutput[i][1] * mOutput[i][1]);
         if (val >= high_val) {
             high_val = val;
             high_index = i;
         }
-        amp[i] = sqrt(mOutput[i][0] * mOutput[i][0] + mOutput[i][1] * mOutput[i][1]);
-        //amp_db[i]=20*log(amp[i]);
+        pAmplitudes[i] = sqrt(mOutput[i][0] * mOutput[i][0] + mOutput[i][1] * mOutput[i][1]);
     }
 
-    const double binSize = mSampleRate / mWindowLength;
+    const float binSize = LISTENER_SAMPLE_RATE / ANALYZER_FFT_WINDOW_LENGTH;
     cout << high_index << " " << (high_index * binSize) << endl;
+}
+
+float spectrum_analyzer::bin_to_freq(unsigned int bid) const
+{
+    return bid * LISTENER_SAMPLE_RATE / ANALYZER_FFT_WINDOW_LENGTH;
 }
 
 void spectrum_analyzer::debug_print_window(unsigned int channel, const float* buffer, unsigned int start_index, unsigned int len)
@@ -90,5 +93,3 @@ void spectrum_analyzer::debug_print_window(unsigned int channel, const float* bu
             << std::setw(10) << minimum << ", "
             << std::setw(10) << maximum << " ]";
 }
-
-

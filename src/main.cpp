@@ -9,23 +9,27 @@
 
 #include <iostream>
 #include <string>
+#include <cassert>
 #include "device_manager/device_manager.h"
 #include "player/sine_wave_player.h"
 #include "analyzer/analyzer.h"
+#include "settings.h"
 
 using std::cout;
 using std::endl;
 using std::string;
 
-void demo_player(double frequency)
+void demo_player()
 {
     device * defaultOutputDevice{device_manager::get_instance()->default_output_device()};
     cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
-    unsigned int channels = 2;
-    unsigned long framesPerBuffer = 1024;
-    sine_wave_player player{channels, defaultOutputDevice->default_sample_rate(), paFloat32, framesPerBuffer, frequency};
+    assert(PLAYER_CHANNELS == 2);
+    assert(PLAYER_FRAMES_PER_BUFFER == 1024);
+    assert(PLAYER_SAMPLE_RATE == defaultOutputDevice->default_sample_rate());
+
+    sine_wave_player player{};
     player.setup_stream(defaultOutputDevice);
     player.start();
 
@@ -41,12 +45,14 @@ void demo_non_blocking_listener()
     cout << "start listening..." << endl << std::flush;
     device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
 
-    unsigned int channels = 2;
-    unsigned long framesPerBuffer = 1024;
-    unsigned int fftWindowLength = 1024;
-    audio_listener listener{channels, defaultInputDevice->default_sample_rate(), paFloat32, framesPerBuffer};
+    assert(LISTENER_CHANNELS == 2);
+    assert(LISTENER_FRAMES_PER_BUFFER == 1024);
+    assert(LISTENER_SAMPLE_RATE == defaultInputDevice->default_sample_rate());
+    assert(ANALYZER_FFT_WINDOW_LENGTH == 1024);
 
-    spectrum_analyzer analyzer{channels, defaultInputDevice->default_sample_rate(), framesPerBuffer, fftWindowLength};
+    audio_listener listener{};
+
+    spectrum_analyzer analyzer{};
     listener.setup_non_blocking_stream(defaultInputDevice, &analyzer);
     listener.start();
     cout << "press Enter to exit..." << endl;
@@ -61,11 +67,8 @@ void demo_blocking_listener()
     cout << "start listening..." << endl << std::flush;
     device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
 
-    unsigned int channels = 2;
-    unsigned long framesPerBuffer = 1024;
-    unsigned int fftWindowLength = 1024;
-    spectrum_analyzer analyzer{channels, defaultInputDevice->default_sample_rate(), framesPerBuffer, fftWindowLength};
-    audio_listener listener{channels, defaultInputDevice->default_sample_rate(), paFloat32, framesPerBuffer};
+    spectrum_analyzer analyzer{};
+    audio_listener listener{};
 
     listener.setup_blocking_stream(defaultInputDevice, &analyzer);
     cout << "entering blocking listen loop" << endl;
@@ -81,14 +84,10 @@ void print_usage(const string& binary_path)
 int main(int argc, char** argv)
 {
     char run_mode = '\0';
-    float gen_frequency{440};
     if (argc > 1) {
         const string & mode{argv[1]};
         if (mode == "play" || mode == "p") {
             run_mode = 'p';
-            if (argc > 2) {
-                gen_frequency = atoi(argv[2]);
-            }
         }
         else if (mode == "listen" || mode == "l") {
             run_mode = 'l';
@@ -103,8 +102,8 @@ int main(int argc, char** argv)
     device_manager::get_instance();
     switch (run_mode) {
     case 'p':
-        cout << "starting generator [" << gen_frequency << " Hz]" << endl;
-        demo_player(gen_frequency);
+        cout << "starting generator [" << GENERATOR_SINE_WAVE_FREQUENCY << " Hz]" << endl;
+        demo_player();
         break;
     case 'l':
         demo_non_blocking_listener();

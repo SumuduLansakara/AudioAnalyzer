@@ -2,16 +2,14 @@
 #include "analyzer/analyzer.h"
 #include "mocked_listener.h"
 #include "device_manager/device_manager.h"
+#include "settings.h"
 
-#define MOCK_INPUT_FREQUENCY 720
 
 using std::cout;
 using std::endl;
 
-mocked_listener::mocked_listener(unsigned int channels, double sampleRate, int sampleFormat,
-                                 unsigned long framesPerBuffer) :
-audio_stream(channels, sampleRate, sampleFormat, framesPerBuffer), pAnalyzer{nullptr},
-mPlayer{channels, sampleRate, paFloat32, framesPerBuffer, MOCK_INPUT_FREQUENCY}, pFakeInputBuffer{new float[framesPerBuffer *channels]}
+mocked_listener::mocked_listener() : pAnalyzer{nullptr}, mPlayer{},
+pFakeInputBuffer{new float[LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS]}
 {
 }
 
@@ -23,13 +21,13 @@ void mocked_listener::setup_non_blocking_stream(device* inputDevice, spectrum_an
 {
     pAnalyzer = analyzer;
     PaStreamParameters inputParameters{inputDevice->input_parameters()};
-    inputParameters.channelCount = mChannels;
-    inputParameters.sampleFormat = mSampleFormat;
+    inputParameters.channelCount = LISTENER_CHANNELS;
+    inputParameters.sampleFormat = LISTENER_SAMPLE_FORMAT;
     inputParameters.suggestedLatency = inputDevice->default_high_input_latency();
     inputParameters.hostApiSpecificStreamInfo = nullptr;
 
-    PaError err{Pa_OpenStream(&mStream, &inputParameters, nullptr, mSampleRate, mFramesPerBuffer, paClipOff,
-                              &mocked_listener::listen_callback, this)};
+    PaError err{Pa_OpenStream(&mStream, &inputParameters, nullptr, LISTENER_SAMPLE_RATE, LISTENER_FRAMES_PER_BUFFER,
+                              paClipOff, &mocked_listener::listen_callback, this)};
     device_manager::get_instance()->check_error(err);
 
     err = Pa_SetStreamFinishedCallback(mStream, &mocked_listener::listen_finished_callback);
@@ -43,29 +41,29 @@ void mocked_listener::setup_blocking_stream(device* inputDevice, spectrum_analyz
 {
     pAnalyzer = analyzer;
     PaStreamParameters inputParameters{inputDevice->input_parameters()};
-    inputParameters.channelCount = mChannels;
-    inputParameters.sampleFormat = mSampleFormat;
+    inputParameters.channelCount = LISTENER_CHANNELS;
+    inputParameters.sampleFormat = LISTENER_SAMPLE_FORMAT;
     inputParameters.suggestedLatency = inputDevice->default_high_input_latency();
     inputParameters.hostApiSpecificStreamInfo = nullptr;
 
-    PaError err{Pa_OpenStream(&mStream, &inputParameters, nullptr, mSampleRate, mFramesPerBuffer, paClipOff,
-                              nullptr, nullptr)};
+    PaError err{Pa_OpenStream(&mStream, &inputParameters, nullptr, LISTENER_SAMPLE_RATE, LISTENER_FRAMES_PER_BUFFER,
+                              paClipOff, nullptr, nullptr)};
     device_manager::get_instance()->check_error(err);
 }
 
 void mocked_listener::start_blocking_listen_loop()
 {
     start();
-    const unsigned int bufLen = mFramesPerBuffer * mChannels;
+    const unsigned int bufLen = LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS;
     float* buffer = new float[bufLen];
     while (true) {
-        Pa_ReadStream(mStream, buffer, mFramesPerBuffer);
+        Pa_ReadStream(mStream, buffer, LISTENER_FRAMES_PER_BUFFER);
         //        on_listen(buffer, mFramesPerBuffer, 0, 0);
 
         float minimum = 999999;
         float maximum = -999999;
-        for (unsigned int i = 0; i < mFramesPerBuffer; ++i) {
-            unsigned int realIndex = (i * mChannels) + 0;
+        for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; ++i) {
+            unsigned int realIndex = (i * LISTENER_CHANNELS) + 0;
             const float sample = buffer[realIndex];
             minimum = std::min(minimum, sample);
             maximum = std::max(maximum, sample);

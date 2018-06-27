@@ -5,9 +5,10 @@
 
 class spectrum_analyzer;
 
-class audio_listener : public audio_stream {
+class audio_listener : public audio_stream
+{
 public:
-    audio_listener(unsigned int channels, double sampleRate, int sampleFormat, unsigned long framesPerBuffer);
+    audio_listener();
     audio_listener(const audio_listener& orig) = delete;
     void operator=(const audio_listener& orig) = delete;
     virtual ~audio_listener();
@@ -21,13 +22,13 @@ public:
 
 private:
     static int listen_callback(const void *inputBuffer, void *outputBuffer,
-            unsigned long framesPerBuffer,
-            const PaStreamCallbackTimeInfo* timeInfo,
-            PaStreamCallbackFlags statusFlags,
-            void *userData);
+                               unsigned long framesPerBuffer,
+                               const PaStreamCallbackTimeInfo* timeInfo,
+                               PaStreamCallbackFlags statusFlags,
+                               void *userData);
 
     int on_listen(const float* inputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
-            PaStreamCallbackFlags statusFlags);
+                  PaStreamCallbackFlags statusFlags);
 
     static void listen_finished_callback(void* userData);
     void on_listen_finished();

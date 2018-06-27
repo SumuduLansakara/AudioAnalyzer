@@ -3,7 +3,8 @@
 #include <portaudio.h>
 #include "device.h"
 
-class device_manager {
+class device_manager
+{
 public:
     static device_manager* get_instance();
 
@@ -16,15 +17,18 @@ public:
 
     void sleep_millis(long milliSecs) const;
 
-    int device_count() const {
+    int device_count() const
+    {
         return mDeviceCount;
     }
 
-    device* default_input_device() const {
+    device* default_input_device() const
+    {
         return make_device(Pa_GetDefaultInputDevice());
     }
 
-    device* default_output_device() const {
+    device* default_output_device() const
+    {
         return make_device(Pa_GetDefaultOutputDevice());
     }
 

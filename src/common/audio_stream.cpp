@@ -4,8 +4,7 @@
 
 using std::runtime_error;
 
-audio_stream::audio_stream(unsigned int channels, double sampleRate, int sampleFormat, unsigned long framesPerBuffer) :
-mChannels{channels}, mSampleRate{sampleRate}, mSampleFormat{sampleFormat}, mFramesPerBuffer{framesPerBuffer},
+audio_stream::audio_stream() :
 mStream{nullptr}
 {
 }

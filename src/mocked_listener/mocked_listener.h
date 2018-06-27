@@ -6,9 +6,10 @@
 
 class spectrum_analyzer;
 
-class mocked_listener : public audio_stream {
+class mocked_listener : public audio_stream
+{
 public:
-    mocked_listener(unsigned int channels, double sampleRate, int sampleFormat, unsigned long framesPerBuffer);
+    mocked_listener();
     mocked_listener(const mocked_listener& orig) = delete;
     void operator=(const mocked_listener& orig) = delete;
     virtual ~mocked_listener();
@@ -22,13 +23,13 @@ public:
 
 private:
     static int listen_callback(const void *inputBuffer, void *outputBuffer,
-            unsigned long framesPerBuffer,
-            const PaStreamCallbackTimeInfo* timeInfo,
-            PaStreamCallbackFlags statusFlags,
-            void *userData);
+                               unsigned long framesPerBuffer,
+                               const PaStreamCallbackTimeInfo* timeInfo,
+                               PaStreamCallbackFlags statusFlags,
+                               void *userData);
 
     int on_listen(const float* inputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
-            PaStreamCallbackFlags statusFlags);
+                  PaStreamCallbackFlags statusFlags);
 
     static void listen_finished_callback(void* userData);
     void on_listen_finished();
