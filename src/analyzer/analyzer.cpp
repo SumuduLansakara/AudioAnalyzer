@@ -82,7 +82,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
 
     // filter and calculate absolute
     unsigned int peakSignalIndex = 0;
-    float peakSignalDb = std::numeric_limits<float>::min();
+    float peakSignalDb = -std::numeric_limits<float>::max();
     ;
     for (unsigned int i{0}; i < ANALYZER_LOW_CUT_INDEX; i++) {
         pAmplitudesDB[i] = mDefaultNoiseDB;
