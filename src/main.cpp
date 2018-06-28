@@ -62,19 +62,6 @@ void demo_non_blocking_listener()
     cout << "listening finished" << endl;
 }
 
-void demo_blocking_listener()
-{
-    cout << "start listening..." << endl << std::flush;
-    device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
-
-    spectrum_analyzer analyzer{};
-    audio_listener listener{};
-
-    listener.setup_blocking_stream(defaultInputDevice, &analyzer);
-    cout << "entering blocking listen loop" << endl;
-    listener.start_blocking_listen_loop();
-}
-
 void print_usage(const string& binary_path)
 {
     cout << "Usage:" << endl;

@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <complex>
+#include <limits>
 
 #include "analyzer.h"
 #include "settings.h"
@@ -81,12 +82,13 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
 
     // filter and calculate absolute
     unsigned int peakSignalIndex = 0;
-    float peakSignalDb = -99;
+    float peakSignalDb = std::numeric_limits<float>::min();
+    ;
     for (unsigned int i{0}; i < ANALYZER_LOW_CUT_INDEX; i++) {
         pAmplitudesDB[i] = mDefaultNoiseDB;
     }
     for (unsigned int i{ANALYZER_LOW_CUT_INDEX}; i < ANALYZER_FFT_WINDOW_LENGTH - ANALYZER_HIGH_CUT_INDEX; i++) {
-        float amplitude = sqrt(mOutput[i][0] * mOutput[i][0] + mOutput[i][1] * mOutput[i][1]);
+        const float amplitude = sqrt(mOutput[i][0] * mOutput[i][0] + mOutput[i][1] * mOutput[i][1]);
         pAmplitudesDB[i] = 20 * log10(amplitude / mReferenceAmplitude);
         if (pAmplitudesDB[i] >= peakSignalDb) {
             peakSignalDb = pAmplitudesDB[i];
@@ -95,6 +97,9 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     }
     for (unsigned int i{ANALYZER_FFT_WINDOW_LENGTH - ANALYZER_HIGH_CUT_INDEX}; i < ANALYZER_FFT_WINDOW_LENGTH; i++) {
         pAmplitudesDB[i] = mDefaultNoiseDB;
+    }
+    if (peakSignalIndex == 0) {
+        throw 8;
     }
 
     //    cout << peakSignalIndex << " " << bin_to_freq(peakSignalIndex) << ":" << HISTORY_LENGTH << endl;
