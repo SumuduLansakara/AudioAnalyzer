@@ -146,7 +146,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
             mStatus.isSignalLocked = true;
             if (abs(mStatus.lastUnlockedSignalMax - peakSignalDb > 10)) {
                 cout << "RECORD on lock" << endl;
-                save_buffer("_L");
+                save_raw_audio("_L");
             }
         }
     }
@@ -157,7 +157,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         mStatus.isRecordingAllowed = false;
         if (abs(mStatus.lastLockedSignalMax - peakSignalDb > 10)) {
             cout << "RECORD on unlock" << endl;
-            save_buffer("_U");
+            save_raw_audio("_U");
         }
     }
     if (mStatus.isBufferFull && pHistNoiseRMS[mNextHistoryIndex] != 0) {
@@ -175,15 +175,15 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     }
     if (histSignalSTD > MAX_HIST_SIGNAL_STD) {
         cout << "[analyzer] REC (S)" << endl;
-        save_buffer("_S");
+        save_raw_audio("_S");
     }
     else if (histNoiseSTD > MAX_HIST_NOISE_STD) {
         cout << "[analyzer] REC (STD N)" << endl;
-        save_buffer("_StdN");
+        save_raw_audio("_StdN");
     }
     else if ((abs(histNoiseAvg) - abs(noiseRMSDb)) > 5) {
         cout << "[analyzer] REC (Avg N)" << endl;
-        save_buffer("_AvgN");
+        save_raw_audio("_AvgN");
     }
     else {
         return;
@@ -229,7 +229,7 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
     return sqrt(t / (endIndex - startIndex - 1));
 }
 
-void spectrum_analyzer::save_buffer(const string& tag) const
+void spectrum_analyzer::save_raw_audio(const string& tag) const
 {
     time_t rawtime;
     time(&rawtime);
@@ -241,8 +241,47 @@ void spectrum_analyzer::save_buffer(const string& tag) const
     if (not outFile) {
         throw std::runtime_error("failed to open output file!");
     }
+    float * startAddress = mCyclicBuffer.tail();
     for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
-        outFile << mCyclicBuffer.tail();
+        outFile << startAddress[i];
+    }
+}
+
+template <typename Word>
+std::ostream& write_word(std::ostream& outs, Word value, unsigned size = sizeof ( Word))
+{
+    for (; size; --size, value >>= 8)
+        outs.put(static_cast<char> (value & 0xFF));
+    return outs;
+}
+
+void spectrum_analyzer::save_wav_audio(const string& tag) const
+{
+    time_t rawtime;
+    time(&rawtime);
+    struct tm * timeinfo = localtime(&rawtime);
+    char buffer[80];
+    strftime(buffer, sizeof (buffer), "%d%m%Y%I%M%S", timeinfo);
+
+    std::ofstream file("output_" + string(buffer) + tag + ".raw", std::ios::binary | std::ios::out);
+    if (not file) {
+        throw std::runtime_error("failed to open output file!");
+    }
+    //    file << "RIFF----WAVEfmt ";
+    //    write_word(file, 16, 4); // no extension data
+    //    write_word(file, 3, 2); // <PCM - integer samples> -> IEEEfloat
+    //    write_word(file, 1, 2); // <two> -> one channels (stereo file)
+    //    write_word(file, 44100, 4); // samples per second (Hz)
+    //    write_word(file, 176400, 4); // (Sample Rate * BitsPerSample * Channels) / 8
+    //    write_word(file, 4, 2); // data block size (size of two integer samples, one for each channel, in bytes)
+    //    write_word(file, 32, 2); // number of bits per sample (use a multiple of 8)
+
+    //    size_t data_chunk_pos = file.tellp();
+    //    file << "data----"; // (chunk size to be filled in later)
+
+    float * startAddress = mCyclicBuffer.tail();
+    for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
+        file << startAddress[i];
     }
 }
 
