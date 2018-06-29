@@ -1,8 +1,6 @@
 #pragma once
 
-const static unsigned int BUFFER_LENGTH = 1024;
-const static unsigned int BUFFER_COUNT = 10;
-const static unsigned int ELEMENT_COUNT = BUFFER_LENGTH * BUFFER_COUNT;
+#include "settings.h"
 
 class cyclic_buffer_container
 {
@@ -13,11 +11,12 @@ public:
     void operator=(const cyclic_buffer_container& orig) = delete;
 
     float* push(float* buffer);
-    float* pop();
+    float* push_address();
+    float* pop_address();
 
     inline bool is_full() const
     {
-        return mBufferCount == BUFFER_COUNT;
+        return mBufferCount == CYCLIC_BUFFER_COUNT;
     }
 
     inline unsigned int get_buffer_count() const
@@ -25,9 +24,9 @@ public:
         return mBufferCount;
     }
 
-    float* data()
+    float * tail() const
     {
-        return pData;
+        return &pData[mTail];
     }
 
 private:

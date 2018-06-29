@@ -4,15 +4,18 @@
 #include <iomanip>
 #include <complex>
 #include <limits>
+#include <fstream>
+#include <ctime>
 
 #include "analyzer.h"
 #include "settings.h"
-#include "thresholds.h"
+#include "settings.h"
 
 const static unsigned int HISTORY_LENGTH = ANALYZER_HISTORY_WINDOW_COUNT * ceil(LISTENER_FRAMES_PER_BUFFER / ANALYZER_FFT_WINDOW_LENGTH);
 
 using std::cout;
 using std::endl;
+using std::string;
 
 void reset_status(ChannelStatus& status)
 {
@@ -73,10 +76,13 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
 void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer, unsigned int start_id,
                                        unsigned int len)
 {
+    float* bufferPushAddress = mCyclicBuffer.push_address();
     for (unsigned int i{0}; i < len; ++i) {
         const float sample = buffer[get_real_index(i + start_id, channel)];
         mInput[i] = sample * mShapingWindow[i];
+        *bufferPushAddress++ = sample;
     }
+    mCyclicBuffer.pop_address();
 
     fftwf_execute(mFFTPlan);
 
@@ -140,6 +146,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
             mStatus.isSignalLocked = true;
             if (abs(mStatus.lastUnlockedSignalMax - peakSignalDb > 10)) {
                 cout << "RECORD on lock" << endl;
+                save_buffer();
             }
         }
     }
@@ -216,6 +223,23 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
         t += (buffer[i] - mean) * (buffer[i] - mean);
     }
     return sqrt(t / (endIndex - startIndex - 1));
+}
+
+void spectrum_analyzer::save_buffer() const
+{
+    time_t rawtime;
+    time(&rawtime);
+    struct tm * timeinfo = localtime(&rawtime);
+    char buffer[80];
+    strftime(buffer, sizeof (buffer), "%d-%m-%Y %I:%M:%S", timeinfo);
+
+    std::ofstream outFile("output_" + string(buffer) + ".raw", std::ios::binary | std::ios::out);
+    if (not outFile) {
+        throw std::runtime_error("failed to open output file!");
+    }
+    for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
+        outFile << mCyclicBuffer.tail();
+    }
 }
 
 void spectrum_analyzer::debug_print_window(unsigned int channel, const float* buffer, unsigned int start_index, unsigned int len)
