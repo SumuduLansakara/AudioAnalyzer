@@ -30,7 +30,7 @@ private:
     inline float get_mean(float* buffer, unsigned int startIndex, unsigned int endIndex) const;
     inline float get_std(float* buffer, float mean, unsigned int startIndex, unsigned int endIndex) const;
 
-    void save_buffer() const;
+    void save_buffer(const std::string& tag) const;
 
     float* mShapingWindow;
     float mReferenceAmplitude;

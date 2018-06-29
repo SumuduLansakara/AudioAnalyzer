@@ -146,7 +146,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
             mStatus.isSignalLocked = true;
             if (abs(mStatus.lastUnlockedSignalMax - peakSignalDb > 10)) {
                 cout << "RECORD on lock" << endl;
-                save_buffer();
+                save_buffer("_L");
             }
         }
     }
@@ -157,6 +157,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         mStatus.isRecordingAllowed = false;
         if (abs(mStatus.lastLockedSignalMax - peakSignalDb > 10)) {
             cout << "RECORD on unlock" << endl;
+            save_buffer("_U");
         }
     }
     if (mStatus.isBufferFull && pHistNoiseRMS[mNextHistoryIndex] != 0) {
@@ -174,12 +175,15 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     }
     if (histSignalSTD > MAX_HIST_SIGNAL_STD) {
         cout << "[analyzer] REC (S)" << endl;
+        save_buffer("_S");
     }
     else if (histNoiseSTD > MAX_HIST_NOISE_STD) {
         cout << "[analyzer] REC (STD N)" << endl;
+        save_buffer("_StdN");
     }
     else if ((abs(histNoiseAvg) - abs(noiseRMSDb)) > 5) {
         cout << "[analyzer] REC (Avg N)" << endl;
+        save_buffer("_AvgN");
     }
     else {
         return;
@@ -225,15 +229,15 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
     return sqrt(t / (endIndex - startIndex - 1));
 }
 
-void spectrum_analyzer::save_buffer() const
+void spectrum_analyzer::save_buffer(const string& tag) const
 {
     time_t rawtime;
     time(&rawtime);
     struct tm * timeinfo = localtime(&rawtime);
     char buffer[80];
-    strftime(buffer, sizeof (buffer), "%d-%m-%Y %I:%M:%S", timeinfo);
+    strftime(buffer, sizeof (buffer), "%d%m%Y%I%M%S", timeinfo);
 
-    std::ofstream outFile("output_" + string(buffer) + ".raw", std::ios::binary | std::ios::out);
+    std::ofstream outFile("output_" + string(buffer) + tag + ".raw", std::ios::binary | std::ios::out);
     if (not outFile) {
         throw std::runtime_error("failed to open output file!");
     }
