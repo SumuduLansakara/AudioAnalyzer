@@ -32,10 +32,10 @@ void reset_status(ChannelStatus& status)
 
 spectrum_analyzer::spectrum_analyzer() : mShapingWindow{new float[ANALYZER_FFT_WINDOW_LENGTH]}, mReferenceAmplitude{0},
 mDefaultNoiseDB{0}, pAmplitudesDB{new float[ANALYZER_FFT_WINDOW_LENGTH]}, mNextHistoryIndex{HISTORY_LENGTH - 1},
-pHistNoiseRMS{new float[HISTORY_LENGTH]}, pHistSignalRMS{new float[HISTORY_LENGTH]}, mStatus{},
-mInput{static_cast<sampleType*> (fftw_malloc(sizeof (sampleType) * ANALYZER_FFT_WINDOW_LENGTH))},
-mOutput{static_cast<fftw_complex*> (fftw_malloc(sizeof (fftw_complex) * ANALYZER_FFT_WINDOW_LENGTH))},
-mFFTPlan{fftw_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}
+pHistNoiseRMS{new float[HISTORY_LENGTH]}, pHistSignalRMS{new float[HISTORY_LENGTH]}, mStatus{}, mCyclicBuffer{},
+mInput{static_cast<float*> (fftwf_malloc(sizeof (float) * ANALYZER_FFT_WINDOW_LENGTH))},
+mOutput{static_cast<fftwf_complex*> (fftwf_malloc(sizeof (fftwf_complex) * ANALYZER_FFT_WINDOW_LENGTH))},
+mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}
 {
     for (unsigned int i = 0; i < ANALYZER_FFT_WINDOW_LENGTH; ++i) {
         mShapingWindow[i] = 0.5 * (1 - cos(2 * M_PI * i / (ANALYZER_FFT_WINDOW_LENGTH - 1)));
@@ -78,7 +78,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         mInput[i] = sample * mShapingWindow[i];
     }
 
-    fftw_execute(mFFTPlan);
+    fftwf_execute(mFFTPlan);
 
     // filter and calculate absolute
     unsigned int peakSignalIndex = 0;

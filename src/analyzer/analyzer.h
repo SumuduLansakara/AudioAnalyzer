@@ -5,8 +5,7 @@
 #include <cmath>
 
 #include "ChannelStatus.h"
-
-using sampleType = double;
+#include "cyclic_buffer_container.h"
 
 class spectrum_analyzer
 {
@@ -40,7 +39,8 @@ private:
     float* pHistSignalRMS;
     ChannelStatus mStatus;
 
-    sampleType* mInput;
-    fftw_complex* mOutput;
-    fftw_plan mFFTPlan;
+    cyclic_buffer_container mCyclicBuffer;
+    float* mInput;
+    fftwf_complex* mOutput;
+    fftwf_plan mFFTPlan;
 };

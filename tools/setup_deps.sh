@@ -6,6 +6,7 @@ fftw_src_url='ftp://ftp.fftw.org/pub/fftw/fftw-3.3.8.tar.gz'
 function setup_library()
 {
     url=$1
+    conf_flags=$2
     filename=$(basename $url)
     wget $url
     if [[ $? -ne 0 ]]; then
@@ -26,7 +27,7 @@ function setup_library()
         exit -1
     fi
 
-    ./configure --prefix=$DEPS_DIR
+    ./configure --prefix=$DEPS_DIR $conf_flags
     if [[ $? -ne 0 ]]; then
         echo "failed configuring ${filename}"
         exit -1
@@ -59,7 +60,7 @@ cd ${TEMP_DIR}
 # setup FFTW
 mkdir fftw
 cd fftw
-setup_library ${fftw_src_url}
+setup_library ${fftw_src_url} --enable-float
 cd ${TEMP_DIR}
 
 # cleanup
