@@ -231,6 +231,8 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
 
 void spectrum_analyzer::save_raw_audio(const string& tag) const
 {
+    save_wav_audio(tag);
+    return;
     time_t rawtime;
     time(&rawtime);
     struct tm * timeinfo = localtime(&rawtime);
@@ -267,22 +269,29 @@ void spectrum_analyzer::save_wav_audio(const string& tag) const
     if (not file) {
         throw std::runtime_error("failed to open output file!");
     }
-    //    file << "RIFF----WAVEfmt ";
-    //    write_word(file, 16, 4); // no extension data
-    //    write_word(file, 3, 2); // <PCM - integer samples> -> IEEEfloat
-    //    write_word(file, 1, 2); // <two> -> one channels (stereo file)
-    //    write_word(file, 44100, 4); // samples per second (Hz)
-    //    write_word(file, 176400, 4); // (Sample Rate * BitsPerSample * Channels) / 8
-    //    write_word(file, 4, 2); // data block size (size of two integer samples, one for each channel, in bytes)
-    //    write_word(file, 32, 2); // number of bits per sample (use a multiple of 8)
+    file << "RIFF----WAVEfmt ";
+    write_word(file, 16, 4); // no extension data
+    write_word(file, 3, 2); // <PCM - integer samples> -> IEEEfloat
+    write_word(file, 1, 2); // <two> -> one channels (stereo file)
+    write_word(file, 44100, 4); // samples per second (Hz)
+    write_word(file, 176400, 4); // (Sample Rate * BitsPerSample * Channels) / 8
+    write_word(file, 4, 2); // data block size (size of two integer samples, one for each channel, in bytes)
+    write_word(file, 32, 2); // number of bits per sample (use a multiple of 8)
 
-    //    size_t data_chunk_pos = file.tellp();
-    //    file << "data----"; // (chunk size to be filled in later)
+    size_t data_chunk_pos = file.tellp();
+    file << "data----"; // (chunk size to be filled in later)
 
     float * startAddress = mCyclicBuffer.tail();
     for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
         file << startAddress[i];
     }
+    size_t file_length = file.tellp();
+    file.seekp(data_chunk_pos + 4);
+    write_word(file, file_length - data_chunk_pos + 8);
+
+    file.seekp(0 + 4);
+    write_word(file, file_length - 8, 4);
+    file.close();
 }
 
 void spectrum_analyzer::debug_print_window(unsigned int channel, const float* buffer, unsigned int start_index, unsigned int len)
