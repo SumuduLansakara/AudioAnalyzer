@@ -76,6 +76,7 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
 void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer, unsigned int start_id,
                                        unsigned int len)
 {
+    static int tempCounter = 0;
     float* bufferPushAddress = mCyclicBuffer.push_address();
     for (unsigned int i{0}; i < len; ++i) {
         const float sample = buffer[get_real_index(i + start_id, channel)];
@@ -83,6 +84,12 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         *bufferPushAddress++ = sample;
     }
     mCyclicBuffer.pop_address();
+    if (tempCounter > 1000) {
+        save_wav_audio("temp");
+        throw std::runtime_error("temp counter overflow");
+    }
+    return;
+
 
     fftwf_execute(mFFTPlan);
 
