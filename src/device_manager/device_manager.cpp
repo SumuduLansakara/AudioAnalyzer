@@ -12,6 +12,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 using std::vector;
+using std::runtime_error;
 
 device_manager* device_manager::sInstance{nullptr};
 
@@ -43,7 +44,7 @@ void device_manager::check_error(PaError err)
         std::stringstream ss;
         ss << "PortAudio error [" << err << "]: ";
         ss << Pa_GetErrorText(err);
-        throw std::runtime_error(ss.str());
+        throw runtime_error(ss.str());
     }
 }
 
@@ -52,9 +53,9 @@ void device_manager::sleep_millis(long milliSecs) const
     Pa_Sleep(milliSecs);
 }
 
-std::vector<device*> device_manager::get_all_devices() const
+vector<device*> device_manager::get_all_devices() const
 {
-    std::vector<device*> devices;
+    vector<device*> devices;
     for (int i{0}; i < mDeviceCount; ++i) {
         devices.push_back(make_device(i));
     }
@@ -64,8 +65,7 @@ std::vector<device*> device_manager::get_all_devices() const
 device* device_manager::make_device(int deviceId) const
 {
     if (deviceId < 0) {
-        cout << "invalid device id " << deviceId << endl;
-        return nullptr;
+        throw runtime_error("invalid device id {}" + std::to_string(deviceId));
     }
     return new device(deviceId);
 }

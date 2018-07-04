@@ -76,7 +76,7 @@ int audio_player::play_callback(const void *, void *outputBuffer, unsigned long 
 
 void audio_player::play_finished_callback(void* userData)
 {
-    return ((audio_player*) userData)->on_play_finished();
+    return static_cast<audio_player*> (userData)->on_play_finished();
 }
 
 void audio_player::on_play_finished()
