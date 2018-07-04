@@ -10,8 +10,8 @@
 using std::cout;
 using std::endl;
 
-audio_player::audio_player() : mPhase{0},
-mTableLength{static_cast<int> (PLAYER_SAMPLE_RATE / GENERATOR_SINE_WAVE_FREQUENCY)}, mTable{new float[mTableLength]}
+audio_player::audio_player(int frequency) : mFrequency{frequency}, mPhase{0},
+mTableLength{static_cast<int> (PLAYER_SAMPLE_RATE / mFrequency)}, mTable{new float[mTableLength]}
 {
 }
 

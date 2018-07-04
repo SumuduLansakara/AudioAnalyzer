@@ -6,7 +6,7 @@ class device;
 class mocked_player : public audio_stream
 {
 public:
-    mocked_player();
+    mocked_player(int frequency);
     mocked_player(const mocked_player& orig) = delete;
     void operator=(const mocked_player& orig) = delete;
     virtual ~mocked_player();
@@ -17,6 +17,7 @@ public:
                 PaStreamCallbackFlags statusFlags);
 
 private:
+    int mFrequency;
     int mPhase;
     int mTableLength;
     float* mTable;

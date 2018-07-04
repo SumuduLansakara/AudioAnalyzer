@@ -6,7 +6,7 @@ class device;
 class audio_player : public audio_stream
 {
 public:
-    audio_player();
+    audio_player(int frequency);
     audio_player(const audio_player& orig) = delete;
     void operator=(const audio_player& orig) = delete;
     virtual ~audio_player();
@@ -24,11 +24,12 @@ private:
     int on_play(float *outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
                 PaStreamCallbackFlags statusFlags);
 
+    int mFrequency;
     int mPhase;
 
 protected:
     virtual void generate_wave_table() = 0;
+
     int mTableLength;
     float* mTable;
-
 };

@@ -19,7 +19,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-void demo_player()
+void demo_player(int frequency)
 {
     device * defaultOutputDevice{device_manager::get_instance()->default_output_device()};
     cout << "Default output device" << endl;
@@ -29,7 +29,7 @@ void demo_player()
     assert(PLAYER_FRAMES_PER_BUFFER == 1024);
     assert(PLAYER_SAMPLE_RATE == defaultOutputDevice->default_sample_rate());
 
-    sine_wave_player player{};
+    sine_wave_player player{frequency};
     player.setup_stream(defaultOutputDevice);
     player.start();
 
@@ -71,10 +71,14 @@ void print_usage(const string& binary_path)
 int main(int argc, char** argv)
 {
     char run_mode = '\0';
+    int generator_frequency{720};
     if (argc > 1) {
         const string & mode{argv[1]};
         if (mode == "play" || mode == "p") {
             run_mode = 'p';
+            if (argc > 2) {
+                generator_frequency = atoi(argv[2]);
+            }
         }
         else if (mode == "listen" || mode == "l") {
             run_mode = 'l';
@@ -89,8 +93,8 @@ int main(int argc, char** argv)
     device_manager::get_instance();
     switch (run_mode) {
     case 'p':
-        cout << "starting generator [" << GENERATOR_SINE_WAVE_FREQUENCY << " Hz]" << endl;
-        demo_player();
+        cout << "starting generator [" << generator_frequency << " Hz]" << endl;
+        demo_player(generator_frequency);
         break;
     case 'l':
         demo_non_blocking_listener();

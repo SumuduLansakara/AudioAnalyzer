@@ -7,7 +7,7 @@ class sine_wave_player : public audio_player
 {
 public:
 
-    sine_wave_player()
+    sine_wave_player(int frequency): audio_player(frequency)
     {
     }
 
