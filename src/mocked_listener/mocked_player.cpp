@@ -14,6 +14,7 @@ using std::endl;
 mocked_player::mocked_player() : mPhase{0},
 mTableLength{static_cast<int> (PLAYER_SAMPLE_RATE / GENERATOR_SINE_WAVE_FREQUENCY)}, mTable{new float[mTableLength]}
 {
+    cout << "mocked player constructed" << endl;
     for (int i{0}; i < mTableLength; i++) {
         mTable[i] = static_cast<float> (sin(2 * M_PI * ((double) i / mTableLength)));
     }

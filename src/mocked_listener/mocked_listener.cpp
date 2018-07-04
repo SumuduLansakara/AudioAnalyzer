@@ -11,6 +11,7 @@ using std::endl;
 mocked_listener::mocked_listener() : pAnalyzer{nullptr}, mPlayer{},
 pFakeInputBuffer{new float[LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS]}
 {
+    cout << "mocked listener constructed" << endl;
 }
 
 mocked_listener::~mocked_listener()

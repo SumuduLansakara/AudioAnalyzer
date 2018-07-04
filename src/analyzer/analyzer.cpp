@@ -38,8 +38,9 @@ mDefaultNoiseDB{0}, pAmplitudesDB{new float[ANALYZER_FFT_WINDOW_LENGTH]}, mNextH
 pHistNoiseRMS{new float[HISTORY_LENGTH]}, pHistSignalRMS{new float[HISTORY_LENGTH]}, mStatus{}, mCyclicBuffer{},
 mInput{static_cast<float*> (fftwf_malloc(sizeof (float) * ANALYZER_FFT_WINDOW_LENGTH))},
 mOutput{static_cast<fftwf_complex*> (fftwf_malloc(sizeof (fftwf_complex) * ANALYZER_FFT_WINDOW_LENGTH))},
-mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}
+mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}, mFile{}
 {
+    cout << "analyzer constructed" << endl;
     for (unsigned int i = 0; i < ANALYZER_FFT_WINDOW_LENGTH; ++i) {
         mShapingWindow[i] = 0.5 * (1 - cos(2 * M_PI * i / (ANALYZER_FFT_WINDOW_LENGTH - 1)));
         mReferenceAmplitude += mShapingWindow[i];
@@ -47,10 +48,12 @@ mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW
     mReferenceAmplitude /= 2;
     mDefaultNoiseDB = 20 * log10(ANALYZER_DEFAULT_NOISE_DB / mReferenceAmplitude);
     reset_status(mStatus);
+    mFile.open("analyzer.raw", std::ios::binary);
 }
 
 spectrum_analyzer::~spectrum_analyzer()
 {
+    mFile.close();
 }
 
 unsigned int spectrum_analyzer::get_real_index(unsigned int index, unsigned int channel) const
@@ -82,6 +85,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         const float sample = buffer[get_real_index(i + start_id, channel)];
         mInput[i] = sample * mShapingWindow[i];
         *bufferPushAddress++ = sample;
+        mFile.write((char*) &sample, sizeof (float));
     }
     mCyclicBuffer.pop_address();
     if (tempCounter > 1000) {

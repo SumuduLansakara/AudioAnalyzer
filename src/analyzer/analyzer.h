@@ -1,5 +1,6 @@
 #pragma once
 
+#include<fstream>
 #include <fftw3.h>
 #include <portaudio.h>
 #include <cmath>
@@ -46,4 +47,5 @@ private:
     float* mInput;
     fftwf_complex* mOutput;
     fftwf_plan mFFTPlan;
+    std::ofstream mFile;
 };
