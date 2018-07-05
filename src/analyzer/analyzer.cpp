@@ -85,7 +85,6 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         const float sample = buffer[get_real_index(i + start_id, channel)];
         mInput[i] = sample * mShapingWindow[i];
         *bufferPushAddress++ = sample;
-        mFile.write((char*) &sample, sizeof (float));
     }
     mCyclicBuffer.pop_address();
     if (tempCounter > 1000) {
@@ -254,10 +253,13 @@ void spectrum_analyzer::save_raw_audio(const string& tag) const
     if (not outFile) {
         throw std::runtime_error("failed to open output file!");
     }
-    float * startAddress = mCyclicBuffer.tail();
-    for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
-        outFile << startAddress[i];
+    float * data = mCyclicBuffer.data();
+    unsigned int bufferIndex{mCyclicBuffer.tail() * LISTENER_FRAMES_PER_BUFFER};
+    for (unsigned int i{0}; i < CYCLIC_BUFFER_COUNT; ++i) {
+        outFile.write((char*) &data[bufferIndex], LISTENER_FRAMES_PER_BUFFER * sizeof (float));
+        bufferIndex = mCyclicBuffer.next_circuler_buffer_index(bufferIndex);
     }
+    outFile.close();
 }
 
 template <typename Word>
@@ -292,10 +294,10 @@ void spectrum_analyzer::save_wav_audio(const string& tag) const
     size_t data_chunk_pos = file.tellp();
     file << "data----"; // (chunk size to be filled in later)
 
-    float * startAddress = mCyclicBuffer.tail();
-    for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
-        file << startAddress[i];
-    }
+    //    float * startAddress = mCyclicBuffer.tail();
+    //    for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
+    //        file << startAddress[i];
+    //    }
     size_t file_length = file.tellp();
     file.seekp(data_chunk_pos + 4);
     write_word(file, file_length - data_chunk_pos + 8);

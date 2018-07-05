@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 cyclic_buffer_container::cyclic_buffer_container() :
-mHead{0}, mTail{0}, mBufferCount{0}, pData{new float[CYCLIC_ELEMENT_COUNT]}
+mHead{0}, mTail{0}, mBufferCount{0}, pData{new float[CYCLIC_BUFFER_COUNT * LISTENER_FRAMES_PER_BUFFER]}
 {
 }
 
@@ -11,7 +11,7 @@ cyclic_buffer_container::~cyclic_buffer_container()
     delete [] pData;
 }
 
-unsigned int cyclic_buffer_container::next_circuler_buffer_index(unsigned int i) const
+inline unsigned int cyclic_buffer_container::next_circuler_buffer_index(unsigned int i) const
 {
     if (++i >= CYCLIC_BUFFER_COUNT) {
         i = 0;

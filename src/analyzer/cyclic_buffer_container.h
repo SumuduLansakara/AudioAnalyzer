@@ -14,6 +14,8 @@ public:
     float* push_address();
     float* pop_address();
 
+    unsigned int next_circuler_buffer_index(unsigned int i) const;
+
     inline bool is_full() const
     {
         return mBufferCount == CYCLIC_BUFFER_COUNT;
@@ -24,14 +26,17 @@ public:
         return mBufferCount;
     }
 
-    float * tail() const
+    unsigned int tail() const
     {
-        return &pData[mTail];
+        return mTail;
+    }
+
+    float * data() const
+    {
+        return pData;
     }
 
 private:
-    inline unsigned int next_circuler_buffer_index(unsigned int i) const;
-
     unsigned int mHead;
     unsigned int mTail;
     unsigned int mBufferCount;
