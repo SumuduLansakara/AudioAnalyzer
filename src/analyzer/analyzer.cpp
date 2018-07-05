@@ -232,8 +232,6 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
 
 void spectrum_analyzer::save_raw_audio(const string& tag) const
 {
-    save_wav_audio(tag);
-    return;
     time_t rawtime;
     time(&rawtime);
     struct tm * timeinfo = localtime(&rawtime);
@@ -244,10 +242,10 @@ void spectrum_analyzer::save_raw_audio(const string& tag) const
     if (not outFile) {
         throw std::runtime_error("failed to open output file!");
     }
-    float * data = mCyclicBuffer.data();
-    unsigned int bufferIndex{mCyclicBuffer.tail() * LISTENER_FRAMES_PER_BUFFER};
+    float * const data{mCyclicBuffer.data()};
+    unsigned int bufferIndex{mCyclicBuffer.tail()};
     for (unsigned int i{0}; i < CYCLIC_BUFFER_COUNT; ++i) {
-        outFile.write((char*) &data[bufferIndex], LISTENER_FRAMES_PER_BUFFER * sizeof (float));
+        outFile.write((char*) &data[bufferIndex * LISTENER_FRAMES_PER_BUFFER], LISTENER_FRAMES_PER_BUFFER * sizeof (float));
         bufferIndex = mCyclicBuffer.next_circuler_buffer_index(bufferIndex);
     }
     outFile.close();
