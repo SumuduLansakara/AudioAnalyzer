@@ -1,5 +1,6 @@
 #include "logger.h"
 
+#include <cassert>
 #include <iostream>
 #include <map>
 
@@ -73,13 +74,12 @@ void logger::write(int level, const string& txt)
     }
 }
 
-// static function definitions
+// static method definitions
 
 void logger::init(const std::string& logpath, int logLevel)
 {
-    if (not sInstance) {
-        sInstance = new logger(logpath, logLevel);
-    }
+    assert(sInstance == nullptr);
+    sInstance = new logger(logpath, logLevel);
 }
 
 logger* logger::get_instance()

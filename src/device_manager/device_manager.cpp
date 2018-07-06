@@ -7,6 +7,7 @@
 
 #include "device_manager.h"
 #include "device.h"
+#include "utilities/logger.h"
 
 using std::cout;
 using std::cerr;
@@ -26,6 +27,7 @@ device_manager* device_manager::get_instance()
 
 device_manager::device_manager() : mError(Pa_Initialize()), mDeviceCount{Pa_GetDeviceCount()}
 {
+    logger::debug("device manager initialized with error " + std::to_string(mError));
     check_error(mError);
 }
 
@@ -64,6 +66,7 @@ vector<device*> device_manager::get_all_devices() const
 
 device* device_manager::make_device(int deviceId) const
 {
+    logger::debug("creating audio device for deviceID = " + std::to_string(deviceId));
     if (deviceId < 0) {
         throw runtime_error("invalid device id {}" + std::to_string(deviceId));
     }

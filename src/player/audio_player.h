@@ -13,8 +13,6 @@ public:
 
     void setup_stream(device* outputDevice);
 
-    void debug_print() const;
-
 private:
     static void play_finished_callback(void* userData);
     void on_play_finished();

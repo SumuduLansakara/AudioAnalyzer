@@ -15,6 +15,7 @@
 #include "analyzer/analyzer.h"
 #include "settings.h"
 #include "utilities/logger.h"
+#include "utilities/runtime.h"
 
 using std::cout;
 using std::endl;
@@ -72,8 +73,6 @@ void print_usage(const string& binary_path)
 
 int main(int argc, char** argv)
 {
-    logger::init("bpiaulog.log", logger::LEVEL_DEBUG);
-    logger::info("started!");
     char run_mode = '\0';
     int generator_frequency{720};
     if (argc > 1) {
@@ -94,6 +93,9 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
+    runtime::init(argv[0]);
+    logger::init(runtime::get_instance()->get_path_from_root("bpiaulog.log"), logger::LEVEL_DEBUG);
+    logger::info("### started ###");
     device_manager::get_instance();
     switch (run_mode) {
     case 'p':

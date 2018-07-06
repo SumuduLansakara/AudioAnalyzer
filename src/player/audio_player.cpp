@@ -6,6 +6,7 @@
 #include "device_manager/device_manager.h"
 #include "audio_player.h"
 #include "settings.h"
+#include "utilities/logger.h"
 
 using std::cout;
 using std::endl;
@@ -18,14 +19,6 @@ mTableLength{static_cast<int> (PLAYER_SAMPLE_RATE / mFrequency)}, mTable{new flo
 audio_player::~audio_player()
 {
     delete [] mTable;
-}
-
-void audio_player::debug_print() const
-{
-    for (int i{0}; i < mTableLength; i++) {
-        cout << mTable[i] << " ";
-    }
-    cout << endl;
 }
 
 void audio_player::setup_stream(device* outputDevice)
@@ -81,5 +74,5 @@ void audio_player::play_finished_callback(void* userData)
 
 void audio_player::on_play_finished()
 {
-    cout << "play finished" << endl;
+    logger::info("on play finish called");
 }

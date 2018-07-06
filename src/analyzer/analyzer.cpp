@@ -10,12 +10,14 @@
 #include "analyzer.h"
 #include "settings.h"
 #include "settings.h"
+#include "utilities/logger.h"
 
 const static unsigned int HISTORY_LENGTH = ANALYZER_HISTORY_WINDOW_COUNT * ceil(LISTENER_FRAMES_PER_BUFFER / ANALYZER_FFT_WINDOW_LENGTH);
 
 using std::cout;
 using std::endl;
 using std::string;
+using std::to_string;
 
 void reset_status(ChannelStatus& status)
 {
@@ -67,8 +69,7 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
     (void) framesPerBuffer;
     (void) timeInfo;
     if (statusFlags != 0) {
-        cout << "[WARNING] listener status set: " << statusFlags << endl;
-
+	logger::warning("listener status = " + to_string(statusFlags));
     }
     for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; i += ANALYZER_FFT_WINDOW_LENGTH) {
         analyze_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
@@ -109,8 +110,6 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     if (peakSignalIndex == 0) {
         throw 8;
     }
-
-    //    cout << peakSignalIndex << " " << bin_to_freq(peakSignalIndex) << ":" << HISTORY_LENGTH << endl;
 
     const float noiseRMSDbL = get_RMS(ANALYZER_LOW_CUT_INDEX, peakSignalIndex - 1);
     const float noiseRMSDbR = get_RMS(peakSignalIndex + 1, ANALYZER_HIGH_CUT_INDEX);
