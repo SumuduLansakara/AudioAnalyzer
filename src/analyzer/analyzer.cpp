@@ -232,6 +232,7 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
 
 void spectrum_analyzer::save_raw_audio(const string& tag) const
 {
+    save_wav_audio(tag);
     time_t rawtime;
     time(&rawtime);
     struct tm * timeinfo = localtime(&rawtime);
@@ -267,14 +268,14 @@ void spectrum_analyzer::save_wav_audio(const string& tag) const
     char buffer[80];
     strftime(buffer, sizeof (buffer), "%d%m%Y%I%M%S", timeinfo);
 
-    std::ofstream file("output_" + string(buffer) + tag + ".raw", std::ios::binary | std::ios::out);
+    std::ofstream file("output_" + string(buffer) + tag + ".wav", std::ios::binary | std::ios::out);
     if (not file) {
         throw std::runtime_error("failed to open output file!");
     }
     file << "RIFF----WAVEfmt ";
     write_word(file, 16, 4); // no extension data
-    write_word(file, 3, 2); // <PCM - integer samples> -> IEEEfloat
-    write_word(file, 1, 2); // <two> -> one channels (stereo file)
+    write_word(file, 3, 2); // IEEEfloat
+    write_word(file, 1, 2); // one channels (stereo file)
     write_word(file, 44100, 4); // samples per second (Hz)
     write_word(file, 176400, 4); // (Sample Rate * BitsPerSample * Channels) / 8
     write_word(file, 4, 2); // data block size (size of two integer samples, one for each channel, in bytes)
@@ -283,10 +284,12 @@ void spectrum_analyzer::save_wav_audio(const string& tag) const
     size_t data_chunk_pos = file.tellp();
     file << "data----"; // (chunk size to be filled in later)
 
-    //    float * startAddress = mCyclicBuffer.tail();
-    //    for (unsigned int i{0}; i < CYCLIC_ELEMENT_COUNT; ++i) {
-    //        file << startAddress[i];
-    //    }
+    float * const data{mCyclicBuffer.data()};
+    unsigned int bufferIndex{mCyclicBuffer.tail()};
+    for (unsigned int i{0}; i < CYCLIC_BUFFER_COUNT; ++i) {
+        file.write((char*) &data[bufferIndex * LISTENER_FRAMES_PER_BUFFER], LISTENER_FRAMES_PER_BUFFER * sizeof (float));
+        bufferIndex = mCyclicBuffer.next_circuler_buffer_index(bufferIndex);
+    }
     size_t file_length = file.tellp();
     file.seekp(data_chunk_pos + 4);
     write_word(file, file_length - data_chunk_pos + 8);
