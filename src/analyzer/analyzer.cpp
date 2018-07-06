@@ -67,7 +67,10 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
 {
     (void) framesPerBuffer;
     (void) timeInfo;
-    (void) statusFlags;
+    if (statusFlags != 0) {
+        cout << "[WARNING] listener status set: " << statusFlags << endl;
+
+    }
     for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; i += ANALYZER_FFT_WINDOW_LENGTH) {
         //        debug_print_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
         analyze_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
@@ -147,7 +150,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
             mStatus.isSignalLocked = true;
             if (abs(mStatus.lastUnlockedSignalMax - peakSignalDb > 10)) {
                 cout << "RECORD on lock" << endl;
-                save_raw_audio("_L");
+                save_wav_audio("_L");
             }
         }
     }
@@ -158,7 +161,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         mStatus.isRecordingAllowed = false;
         if (abs(mStatus.lastLockedSignalMax - peakSignalDb > 10)) {
             cout << "RECORD on unlock" << endl;
-            save_raw_audio("_U");
+            save_wav_audio("_U");
         }
     }
     if (mStatus.isBufferFull && pHistNoiseRMS[mNextHistoryIndex] != 0) {
@@ -176,15 +179,15 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     }
     if (histSignalSTD > MAX_HIST_SIGNAL_STD) {
         cout << "[analyzer] REC (S)" << endl;
-        save_raw_audio("_S");
+        save_wav_audio("_S");
     }
     else if (histNoiseSTD > MAX_HIST_NOISE_STD) {
         cout << "[analyzer] REC (STD N)" << endl;
-        save_raw_audio("_StdN");
+        save_wav_audio("_StdN");
     }
     else if ((abs(histNoiseAvg) - abs(noiseRMSDb)) > 5) {
         cout << "[analyzer] REC (Avg N)" << endl;
-        save_raw_audio("_AvgN");
+        save_wav_audio("_AvgN");
     }
     else {
         return;
@@ -232,7 +235,6 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
 
 void spectrum_analyzer::save_raw_audio(const string& tag) const
 {
-    save_wav_audio(tag);
     time_t rawtime;
     time(&rawtime);
     struct tm * timeinfo = localtime(&rawtime);
