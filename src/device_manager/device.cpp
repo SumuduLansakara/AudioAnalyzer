@@ -1,24 +1,25 @@
 #include <iostream>
 #include <iterator>
 #include "device.h"
+#include "utilities/logger.h"
 
 using std::cout;
 using std::endl;
 using std::vector;
+using std::string;
+using std::to_string;
 
-void device::debug_print() const
+void device::debug_print()
 {
-    cout << "name: " << mName << endl;
-    cout << "host API: " << mHostApi << endl;
-    cout << "default sampling rate: " << mDefaultSampleRate << endl;
-
-    cout << "max input channels: " << mMaxInputChannels << endl;
-    cout << "default low input latency: " << mDefaultLowInputLatency << endl;
-    cout << "default high input latency: " << mDefaultHighInputLatency << endl;
-
-    cout << "max output channels: " << mMaxOutputChannels << endl;
-    cout << "default low output latency: " << mDefaultLowOutputLatency << endl;
-    cout << "default high output latency: " << mDefaultHighOutputLatency << endl;
+    logger::debug("name: " + mName);
+    logger::debug("host API: " + mHostApi);
+    logger::debug("default sampling rate: " + to_string(mDefaultSampleRate));
+    logger::debug("max input channels: " + to_string(mMaxInputChannels));
+    logger::debug("default low input latency: " + to_string(mDefaultLowInputLatency));
+    logger::debug("default high input latency: " + to_string(mDefaultHighInputLatency));
+    logger::debug("max output channels: " + to_string(mMaxOutputChannels));
+    logger::debug("default low output latency: " + to_string(mDefaultLowOutputLatency));
+    logger::debug("default high output latency: " + to_string(mDefaultHighOutputLatency));
 }
 
 const double device::STANDARD_SAMPLE_RATES[] = {

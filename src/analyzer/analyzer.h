@@ -24,7 +24,6 @@ public:
     void analyze_window(unsigned int channel, const float* buffer, unsigned int start_id, unsigned int len);
 
 private:
-    void debug_print_window(unsigned int channel, const float* buffer, unsigned int start_index, unsigned int len);
     inline float bin_to_freq(unsigned int bid) const;
 
     inline float get_RMS(unsigned int startIndex, unsigned int endIndex) const;

@@ -40,7 +40,6 @@ mInput{static_cast<float*> (fftwf_malloc(sizeof (float) * ANALYZER_FFT_WINDOW_LE
 mOutput{static_cast<fftwf_complex*> (fftwf_malloc(sizeof (fftwf_complex) * ANALYZER_FFT_WINDOW_LENGTH))},
 mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}
 {
-    cout << "analyzer constructed" << endl;
     for (unsigned int i = 0; i < ANALYZER_FFT_WINDOW_LENGTH; ++i) {
         mShapingWindow[i] = 0.5 * (1 - cos(2 * M_PI * i / (ANALYZER_FFT_WINDOW_LENGTH - 1)));
         mReferenceAmplitude += mShapingWindow[i];
@@ -72,7 +71,6 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
 
     }
     for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; i += ANALYZER_FFT_WINDOW_LENGTH) {
-        //        debug_print_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
         analyze_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
     }
 }
@@ -299,22 +297,4 @@ void spectrum_analyzer::save_wav_audio(const string& tag) const
     file.seekp(0 + 4);
     write_word(file, file_length - 8, 4);
     file.close();
-}
-
-void spectrum_analyzer::debug_print_window(unsigned int channel, const float* buffer, unsigned int start_index, unsigned int len)
-{
-    float sum = 0;
-    float minimum = 999999;
-    float maximum = -999999;
-    for (unsigned int i = start_index; i < start_index + len; ++i) {
-        const float sample = buffer[get_real_index(i, channel)];
-        minimum = std::min(minimum, sample);
-        maximum = std::max(maximum, sample);
-        sum += sample;
-    }
-    cout << std::fixed << std::setprecision(7) << std::setfill(' ');
-    cout << "[ "
-            << std::setw(10) << (sum / len) << ", "
-            << std::setw(10) << minimum << ", "
-            << std::setw(10) << maximum << " ]";
 }

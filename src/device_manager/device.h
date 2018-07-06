@@ -66,7 +66,7 @@ public:
     std::vector<double> get_supported_sample_rates(const PaStreamParameters*, const PaStreamParameters*) const;
 
 
-    void debug_print() const;
+    void debug_print();
 
 private:
     void load_device();

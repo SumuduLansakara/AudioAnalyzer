@@ -14,6 +14,7 @@
 #include "player/sine_wave_player.h"
 #include "analyzer/analyzer.h"
 #include "settings.h"
+#include "utilities/logger.h"
 
 using std::cout;
 using std::endl;
@@ -22,7 +23,6 @@ using std::string;
 void demo_player(int frequency)
 {
     device * defaultOutputDevice{device_manager::get_instance()->default_output_device()};
-    cout << "Default output device" << endl;
     defaultOutputDevice->debug_print();
 
     assert(PLAYER_CHANNELS == 2);
@@ -31,18 +31,19 @@ void demo_player(int frequency)
 
     sine_wave_player player{frequency};
     player.setup_stream(defaultOutputDevice);
+    logger::info("start playing..");
     player.start();
+    logger::info("press <ENTER> to exit...");
 
-    cout << "playing... press Enter to exit" << endl;
     std::cin.get();
 
     player.stop();
     player.close();
+    logger::info("playing finished");
 }
 
 void demo_non_blocking_listener()
 {
-    cout << "start listening..." << endl << std::flush;
     device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
 
     assert(LISTENER_CHANNELS == 2);
@@ -54,12 +55,13 @@ void demo_non_blocking_listener()
 
     spectrum_analyzer analyzer{};
     listener.setup_non_blocking_stream(defaultInputDevice, &analyzer);
+    logger::info("start listening..");
     listener.start();
-    cout << "press Enter to exit..." << endl;
+    logger::info("press <ENTER> to exit...");
     std::cin.get();
 
     listener.close();
-    cout << "listening finished" << endl;
+    logger::info("listening finished");
 }
 
 void print_usage(const string& binary_path)
@@ -70,6 +72,8 @@ void print_usage(const string& binary_path)
 
 int main(int argc, char** argv)
 {
+    logger::init("bpiaulog.log", logger::LEVEL_DEBUG);
+    logger::info("started!");
     char run_mode = '\0';
     int generator_frequency{720};
     if (argc > 1) {
@@ -93,10 +97,11 @@ int main(int argc, char** argv)
     device_manager::get_instance();
     switch (run_mode) {
     case 'p':
-        cout << "starting generator [" << generator_frequency << " Hz]" << endl;
+        logger::info("starting generator [" + std::to_string(generator_frequency) + " Hz]");
         demo_player(generator_frequency);
         break;
     case 'l':
+        logger::info("starting listener");
         demo_non_blocking_listener();
         break;
     }
