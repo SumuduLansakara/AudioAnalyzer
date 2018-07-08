@@ -59,9 +59,11 @@ spectrum_analyzer::~spectrum_analyzer()
 
 void spectrum_analyzer::notify()
 {
+    pCache->lock();
     for (unsigned int c : ANALYZED_CHANNELS) {
         analyze_window(c, pCache->get_read_address(c));
     }
+    pCache->unlock();
 }
 
 void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer)
