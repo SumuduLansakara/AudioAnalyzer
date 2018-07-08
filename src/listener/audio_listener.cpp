@@ -1,13 +1,17 @@
 #include <iostream>
+#include <cassert>
 #include "analyzer/analyzer.h"
+#include "buffering/buffer_cache.h"
 #include "audio_listener.h"
 #include "device_manager/device_manager.h"
 #include "settings.h"
+#include "utilities/logger.h"
 
 using std::cout;
 using std::endl;
+using std::to_string;
 
-audio_listener::audio_listener() : pAnalyzer{nullptr}
+audio_listener::audio_listener(buffer_cache* cache) : pAnalyzer{nullptr}, pCache{cache}
 {
 }
 
@@ -19,7 +23,7 @@ void audio_listener::setup_non_blocking_stream(device* inputDevice, spectrum_ana
 {
     pAnalyzer = analyzer;
     PaStreamParameters inputParameters{inputDevice->input_parameters()};
-    inputParameters.channelCount = LISTENER_CHANNELS;
+    inputParameters.channelCount = LISTENED_CHANNELS;
     inputParameters.sampleFormat = LISTENER_SAMPLE_FORMAT;
     inputParameters.suggestedLatency = inputDevice->default_high_input_latency();
     inputParameters.hostApiSpecificStreamInfo = nullptr;
@@ -32,41 +36,6 @@ void audio_listener::setup_non_blocking_stream(device* inputDevice, spectrum_ana
     if (err != paNoError) {
         Pa_CloseStream(mStream);
         device_manager::get_instance()->check_error(err);
-    }
-}
-
-void audio_listener::setup_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer)
-{
-    pAnalyzer = analyzer;
-    PaStreamParameters inputParameters{inputDevice->input_parameters()};
-    inputParameters.channelCount = LISTENER_CHANNELS;
-    inputParameters.sampleFormat = LISTENER_SAMPLE_FORMAT;
-    inputParameters.suggestedLatency = inputDevice->default_high_input_latency();
-    inputParameters.hostApiSpecificStreamInfo = nullptr;
-
-    PaError err{Pa_OpenStream(&mStream, &inputParameters, nullptr, LISTENER_SAMPLE_RATE, LISTENER_FRAMES_PER_BUFFER,
-                              paClipOff, nullptr, nullptr)};
-    device_manager::get_instance()->check_error(err);
-}
-
-void audio_listener::start_blocking_listen_loop()
-{
-    start();
-    const unsigned int bufLen = LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS;
-    float* buffer = new float[bufLen];
-    while (true) {
-        Pa_ReadStream(mStream, buffer, LISTENER_FRAMES_PER_BUFFER);
-        //        on_listen(buffer, mFramesPerBuffer, 0, 0);
-
-        float minimum = 999999;
-        float maximum = -999999;
-        for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; ++i) {
-            unsigned int realIndex = (i * LISTENER_CHANNELS) + 0;
-            const float sample = buffer[realIndex];
-            minimum = std::min(minimum, sample);
-            maximum = std::max(maximum, sample);
-        }
-        cout << "min, max = " << minimum << ", " << maximum << endl;
     }
 }
 
@@ -86,7 +55,13 @@ int audio_listener::on_listen(const float * inputBuffer,
                               const PaStreamCallbackTimeInfo* timeInfo,
                               PaStreamCallbackFlags statusFlags)
 {
-    pAnalyzer->analyze_buffer(inputBuffer, framesPerBuffer, timeInfo, statusFlags);
+    (void) timeInfo;
+    assert(framesPerBuffer == LISTENER_FRAMES_PER_BUFFER);
+    if (statusFlags != 0) {
+        logger::info("listener status = " + to_string(statusFlags));
+    }
+    pCache->store_buffer(inputBuffer);
+    pAnalyzer->notify();
     return false;
 }
 
@@ -97,7 +72,7 @@ void audio_listener::listen_finished_callback(void* userData)
 
 void audio_listener::on_listen_finished()
 {
-    cout << "listen finished" << endl;
+    logger::debug("on_listen_finished()");
 }
 
 bool audio_listener::is_listening() const

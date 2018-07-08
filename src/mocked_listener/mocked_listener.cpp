@@ -4,26 +4,23 @@
 #include "device_manager/device_manager.h"
 #include "settings.h"
 #include "utilities/logger.h"
-
+#include "buffering/buffer_cache.h"
 
 using std::cout;
 using std::endl;
+using std::to_string;
 
-mocked_listener::mocked_listener() : pAnalyzer{nullptr}, mPlayer{440},
-pFakeInputBuffer{new float[LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS]}
+mocked_listener::mocked_listener(buffer_cache* cache) : pAnalyzer{nullptr}, mPlayer{440},
+pFakeInputBuffer{new float[LISTENER_FRAMES_PER_BUFFER * LISTENED_CHANNELS]}, pCache{cache}
 {
     logger::warning("mocked listener constructed");
 }
 
-mocked_listener::~mocked_listener()
-{
-}
-
-void mocked_listener::setup_non_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer)
+void mocked_listener::setup_non_blocking_stream(device* inputDevice, spectrum_analyzer * analyzer)
 {
     pAnalyzer = analyzer;
     PaStreamParameters inputParameters{inputDevice->input_parameters()};
-    inputParameters.channelCount = LISTENER_CHANNELS;
+    inputParameters.channelCount = LISTENED_CHANNELS;
     inputParameters.sampleFormat = LISTENER_SAMPLE_FORMAT;
     inputParameters.suggestedLatency = inputDevice->default_high_input_latency();
     inputParameters.hostApiSpecificStreamInfo = nullptr;
@@ -36,41 +33,6 @@ void mocked_listener::setup_non_blocking_stream(device* inputDevice, spectrum_an
     if (err != paNoError) {
         Pa_CloseStream(mStream);
         device_manager::get_instance()->check_error(err);
-    }
-}
-
-void mocked_listener::setup_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer)
-{
-    pAnalyzer = analyzer;
-    PaStreamParameters inputParameters{inputDevice->input_parameters()};
-    inputParameters.channelCount = LISTENER_CHANNELS;
-    inputParameters.sampleFormat = LISTENER_SAMPLE_FORMAT;
-    inputParameters.suggestedLatency = inputDevice->default_high_input_latency();
-    inputParameters.hostApiSpecificStreamInfo = nullptr;
-
-    PaError err{Pa_OpenStream(&mStream, &inputParameters, nullptr, LISTENER_SAMPLE_RATE, LISTENER_FRAMES_PER_BUFFER,
-                              paClipOff, nullptr, nullptr)};
-    device_manager::get_instance()->check_error(err);
-}
-
-void mocked_listener::start_blocking_listen_loop()
-{
-    start();
-    const unsigned int bufLen = LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS;
-    float* buffer = new float[bufLen];
-    while (true) {
-        Pa_ReadStream(mStream, buffer, LISTENER_FRAMES_PER_BUFFER);
-        //        on_listen(buffer, mFramesPerBuffer, 0, 0);
-
-        float minimum = 999999;
-        float maximum = -999999;
-        for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; ++i) {
-            unsigned int realIndex = (i * LISTENER_CHANNELS) + 0;
-            const float sample = buffer[realIndex];
-            minimum = std::min(minimum, sample);
-            maximum = std::max(maximum, sample);
-        }
-        cout << "min, max = " << minimum << ", " << maximum << endl;
     }
 }
 
@@ -91,8 +53,13 @@ int mocked_listener::on_listen(const float * inputBuffer,
                                PaStreamCallbackFlags statusFlags)
 {
     (void) inputBuffer;
+    if (statusFlags != 0) {
+        logger::info("listener status = " + to_string(statusFlags));
+    }
     mPlayer.on_play(pFakeInputBuffer, framesPerBuffer, timeInfo, statusFlags);
-    pAnalyzer->analyze_buffer(pFakeInputBuffer, framesPerBuffer, timeInfo, statusFlags);
+    pCache->store_buffer(pFakeInputBuffer);
+    pAnalyzer->notify();
+    // pAnalyzer->analyze_buffer(pFakeInputBuffer, framesPerBuffer, timeInfo, statusFlags);
     return false;
 }
 
@@ -103,7 +70,7 @@ void mocked_listener::listen_finished_callback(void* userData)
 
 void mocked_listener::on_listen_finished()
 {
-    logger::warning("mocked listener on_listen_finished()");
+    logger::info("mocked listener on_listen_finished()");
 }
 
 bool mocked_listener::is_listening() const

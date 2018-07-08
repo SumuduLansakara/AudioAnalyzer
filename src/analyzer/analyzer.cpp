@@ -11,6 +11,7 @@
 #include "settings.h"
 #include "settings.h"
 #include "utilities/logger.h"
+#include "buffering/buffer_cache.h"
 
 const static unsigned int HISTORY_LENGTH = ANALYZER_HISTORY_WINDOW_COUNT * ceil(LISTENER_FRAMES_PER_BUFFER / ANALYZER_FFT_WINDOW_LENGTH);
 
@@ -35,12 +36,13 @@ void reset_status(ChannelStatus& status)
     status.noiseSTD = 0;
 }
 
-spectrum_analyzer::spectrum_analyzer() : mShapingWindow{new float[ANALYZER_FFT_WINDOW_LENGTH]}, mReferenceAmplitude{0},
-mDefaultNoiseDB{0}, pAmplitudesDB{new float[ANALYZER_FFT_WINDOW_LENGTH]}, mNextHistoryIndex{HISTORY_LENGTH - 1},
-pHistNoiseRMS{new float[HISTORY_LENGTH]}, pHistSignalRMS{new float[HISTORY_LENGTH]}, mStatus{}, mCyclicBuffer{},
+spectrum_analyzer::spectrum_analyzer(buffer_cache* cache) : mShapingWindow{new float[ANALYZER_FFT_WINDOW_LENGTH]},
+mReferenceAmplitude{0}, mDefaultNoiseDB{0}, pAmplitudesDB{new float[ANALYZER_FFT_WINDOW_LENGTH]},
+mNextHistoryIndex{HISTORY_LENGTH - 1}, pHistNoiseRMS{new float[HISTORY_LENGTH]},
+pHistSignalRMS{new float[HISTORY_LENGTH]}, mStatus{},
 mInput{static_cast<float*> (fftwf_malloc(sizeof (float) * ANALYZER_FFT_WINDOW_LENGTH))},
 mOutput{static_cast<fftwf_complex*> (fftwf_malloc(sizeof (fftwf_complex) * ANALYZER_FFT_WINDOW_LENGTH))},
-mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}
+mFFTPlan{fftwf_plan_dft_r2c_1d(ANALYZER_FFT_WINDOW_LENGTH, mInput, mOutput, FFTW_ESTIMATE)}, pCache{cache}
 {
     for (unsigned int i = 0; i < ANALYZER_FFT_WINDOW_LENGTH; ++i) {
         mShapingWindow[i] = 0.5 * (1 - cos(2 * M_PI * i / (ANALYZER_FFT_WINDOW_LENGTH - 1)));
@@ -55,37 +57,19 @@ spectrum_analyzer::~spectrum_analyzer()
 {
 }
 
-unsigned int spectrum_analyzer::get_real_index(unsigned int index, unsigned int channel) const
+void spectrum_analyzer::notify()
 {
-    assert((index * LISTENER_CHANNELS) + channel < LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS);
-    return (index * LISTENER_CHANNELS) +channel;
-}
-
-void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
-                                       unsigned long framesPerBuffer,
-                                       const PaStreamCallbackTimeInfo* timeInfo,
-                                       PaStreamCallbackFlags statusFlags)
-{
-    (void) framesPerBuffer;
-    (void) timeInfo;
-    if (statusFlags != 0) {
-        logger::warning("listener status = " + to_string(statusFlags));
-    }
-    for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; i += ANALYZER_FFT_WINDOW_LENGTH) {
-        analyze_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
+    for (unsigned int c : ANALYZED_CHANNELS) {
+        analyze_window(c, pCache->get_read_address(c));
     }
 }
 
-void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer, unsigned int start_id,
-                                       unsigned int len)
+void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer)
 {
-    float* bufferPushAddress{mCyclicBuffer.push_address()};
-    for (unsigned int i{0}; i < len; ++i) {
-        const float sample{buffer[get_real_index(i + start_id, channel)]};
-        mInput[i] = sample * mShapingWindow[i];
-        *bufferPushAddress++ = sample;
+    (void) channel;
+    for (unsigned int i{0}; i < LISTENER_FRAMES_PER_BUFFER; ++i) {
+        mInput[i] = buffer[i] * mShapingWindow[i];
     }
-    mCyclicBuffer.pop_address();
 
     fftwf_execute(mFFTPlan);
 
@@ -148,7 +132,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
             mStatus.isSignalLocked = true;
             if (abs(mStatus.lastUnlockedSignalMax - peakSignalDb > 10)) {
                 logger::info("RECORD triggered [lock]");
-                save_wav_audio("_L");
+                save_wav_audio(channel, "_L");
             }
         }
     }
@@ -159,7 +143,7 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         mStatus.isRecordingAllowed = false;
         if (abs(mStatus.lastLockedSignalMax - peakSignalDb > 10)) {
             logger::info("RECORD triggered [unlock]");
-            save_wav_audio("_U");
+            save_wav_audio(channel, "_U");
         }
     }
     if (mStatus.isBufferFull && pHistNoiseRMS[mNextHistoryIndex] != 0) {
@@ -177,15 +161,15 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     }
     if (histSignalSTD > MAX_HIST_SIGNAL_STD) {
         logger::info("RECORD triggered [S]");
-        save_wav_audio("_S");
+        save_wav_audio(channel, "_S");
     }
     else if (histNoiseSTD > MAX_HIST_NOISE_STD) {
         logger::info("RECORD triggered [Std N]");
-        save_wav_audio("_StdN");
+        save_wav_audio(channel, "_StdN");
     }
     else if ((abs(histNoiseAvg) - abs(noiseRMSDb)) > 5) {
         logger::info("RECORD triggered [Avg N]");
-        save_wav_audio("_AvgN");
+        save_wav_audio(channel, "_AvgN");
     }
     else {
         return;
@@ -231,27 +215,6 @@ float spectrum_analyzer::get_std(float* buffer, float mean, unsigned int startIn
     return sqrt(t / (endIndex - startIndex - 1));
 }
 
-void spectrum_analyzer::save_raw_audio(const string& tag) const
-{
-    time_t rawtime;
-    time(&rawtime);
-    struct tm * timeinfo = localtime(&rawtime);
-    char buffer[80];
-    strftime(buffer, sizeof (buffer), "%d%m%Y%I%M%S", timeinfo);
-
-    std::ofstream outFile("output_" + string(buffer) + tag + ".raw", std::ios::binary | std::ios::out);
-    if (not outFile) {
-        throw std::runtime_error("failed to open output file!");
-    }
-    float * const data{mCyclicBuffer.data()};
-    unsigned int bufferIndex{mCyclicBuffer.tail()};
-    for (unsigned int i{0}; i < CYCLIC_BUFFER_COUNT; ++i) {
-        outFile.write((char*) &data[bufferIndex * LISTENER_FRAMES_PER_BUFFER], LISTENER_FRAMES_PER_BUFFER * sizeof (float));
-        bufferIndex = mCyclicBuffer.next_circuler_buffer_index(bufferIndex);
-    }
-    outFile.close();
-}
-
 template <typename Word>
 std::ostream& write_word(std::ostream& outs, Word value, unsigned size = sizeof ( Word))
 {
@@ -260,7 +223,7 @@ std::ostream& write_word(std::ostream& outs, Word value, unsigned size = sizeof 
     return outs;
 }
 
-void spectrum_analyzer::save_wav_audio(const string& tag) const
+void spectrum_analyzer::save_wav_audio(unsigned int channel, const string& tag) const
 {
     time_t rawtime;
     time(&rawtime);
@@ -284,11 +247,12 @@ void spectrum_analyzer::save_wav_audio(const string& tag) const
     size_t data_chunk_pos = file.tellp();
     file << "data----"; // (chunk size to be filled in later)
 
-    float * const data{mCyclicBuffer.data()};
-    unsigned int bufferIndex{mCyclicBuffer.tail()};
+    channel_buffer* mCyclicBuffer = pCache->get_channel_buffer(channel);
+    float * const data{mCyclicBuffer->data()};
+    unsigned int bufferIndex{mCyclicBuffer->tail()};
     for (unsigned int i{0}; i < CYCLIC_BUFFER_COUNT; ++i) {
         file.write((char*) &data[bufferIndex * LISTENER_FRAMES_PER_BUFFER], LISTENER_FRAMES_PER_BUFFER * sizeof (float));
-        bufferIndex = mCyclicBuffer.next_circuler_buffer_index(bufferIndex);
+        bufferIndex = mCyclicBuffer->next_circuler_buffer_index(bufferIndex);
     }
     size_t file_length = file.tellp();
     file.seekp(data_chunk_pos + 4);

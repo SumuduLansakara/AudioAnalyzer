@@ -2,13 +2,15 @@
 
 #include "settings.h"
 
-class cyclic_buffer_container
+static const unsigned int CYCLIC_BUFFER_COUNT = LISTENER_SAMPLE_RATE * RECORD_SECONDS / LISTENER_FRAMES_PER_BUFFER;
+
+class channel_buffer
 {
 public:
-    cyclic_buffer_container();
-    virtual ~cyclic_buffer_container();
-    cyclic_buffer_container(const cyclic_buffer_container& orig) = delete;
-    void operator=(const cyclic_buffer_container& orig) = delete;
+    channel_buffer();
+    virtual ~channel_buffer();
+    channel_buffer(const channel_buffer& orig) = delete;
+    void operator=(const channel_buffer& orig) = delete;
 
     float* push(float* buffer);
     float* push_address();

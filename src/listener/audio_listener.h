@@ -4,19 +4,17 @@
 #include "common/audio_stream.h"
 
 class spectrum_analyzer;
+class buffer_cache;
 
 class audio_listener : public audio_stream
 {
 public:
-    audio_listener();
+    audio_listener(buffer_cache* cache);
     audio_listener(const audio_listener& orig) = delete;
     void operator=(const audio_listener& orig) = delete;
     virtual ~audio_listener();
 
     void setup_non_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer);
-
-    void setup_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer);
-    void start_blocking_listen_loop();
 
     bool is_listening() const;
 
@@ -34,4 +32,5 @@ private:
     void on_listen_finished();
 
     spectrum_analyzer* pAnalyzer;
+    buffer_cache* pCache;
 };

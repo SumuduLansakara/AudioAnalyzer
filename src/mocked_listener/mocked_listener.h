@@ -5,19 +5,21 @@
 #include"mocked_player.h"
 
 class spectrum_analyzer;
+class buffer_cache;
 
 class mocked_listener : public audio_stream
 {
 public:
-    mocked_listener();
+    mocked_listener(buffer_cache* cache);
+
+    ~mocked_listener()
+    {
+    }
+
     mocked_listener(const mocked_listener& orig) = delete;
     void operator=(const mocked_listener& orig) = delete;
-    virtual ~mocked_listener();
 
     void setup_non_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer);
-
-    void setup_blocking_stream(device* inputDevice, spectrum_analyzer* analyzer);
-    void start_blocking_listen_loop();
 
     bool is_listening() const;
 
@@ -36,4 +38,5 @@ private:
     spectrum_analyzer* pAnalyzer;
     mocked_player mPlayer;
     float* pFakeInputBuffer;
+    buffer_cache* pCache;
 };

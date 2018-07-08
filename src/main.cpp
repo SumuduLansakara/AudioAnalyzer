@@ -16,6 +16,7 @@
 #include "settings.h"
 #include "utilities/logger.h"
 #include "utilities/runtime.h"
+#include "buffering/buffer_cache.h"
 
 using std::cout;
 using std::endl;
@@ -48,14 +49,15 @@ void demo_non_blocking_listener()
 {
     device * defaultInputDevice{device_manager::get_instance()->default_input_device()};
 
-    assert(LISTENER_CHANNELS == 2);
+    assert(LISTENED_CHANNELS == 2);
     assert(LISTENER_FRAMES_PER_BUFFER == 1024);
     assert(LISTENER_SAMPLE_RATE == defaultInputDevice->default_sample_rate());
     assert(ANALYZER_FFT_WINDOW_LENGTH == 1024);
 
-    audio_listener listener{};
+    buffer_cache store;
+    audio_listener listener{&store};
 
-    spectrum_analyzer analyzer{};
+    spectrum_analyzer analyzer{&store};
     listener.setup_non_blocking_stream(defaultInputDevice, &analyzer);
     logger::info("start listening..");
     listener.start();

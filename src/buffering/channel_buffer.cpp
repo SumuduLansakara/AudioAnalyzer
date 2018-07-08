@@ -1,17 +1,20 @@
-#include "cyclic_buffer_container.h"
+#include "channel_buffer.h"
+#include "utilities/logger.h"
 #include <stdexcept>
 
-cyclic_buffer_container::cyclic_buffer_container() :
+using std::to_string;
+
+channel_buffer::channel_buffer() :
 mHead{0}, mTail{0}, mBufferCount{0}, pData{new float[CYCLIC_BUFFER_COUNT * LISTENER_FRAMES_PER_BUFFER]}
 {
 }
 
-cyclic_buffer_container::~cyclic_buffer_container()
+channel_buffer::~channel_buffer()
 {
     delete [] pData;
 }
 
-inline unsigned int cyclic_buffer_container::next_circuler_buffer_index(unsigned int i) const
+inline unsigned int channel_buffer::next_circuler_buffer_index(unsigned int i) const
 {
     if (++i >= CYCLIC_BUFFER_COUNT) {
         i = 0;
@@ -19,7 +22,7 @@ inline unsigned int cyclic_buffer_container::next_circuler_buffer_index(unsigned
     return i;
 }
 
-float* cyclic_buffer_container::push(float* buffer)
+float* channel_buffer::push(float* buffer)
 {
     mBufferCount++;
     if (mBufferCount >= CYCLIC_BUFFER_COUNT) {
@@ -33,7 +36,7 @@ float* cyclic_buffer_container::push(float* buffer)
     return &pData[startIndex];
 }
 
-float* cyclic_buffer_container::push_address()
+float* channel_buffer::push_address()
 {
     if (mBufferCount == CYCLIC_BUFFER_COUNT - 1) {
         throw std::logic_error("failed getting push address! buffer overflow");
@@ -44,7 +47,7 @@ float* cyclic_buffer_container::push_address()
     return &pData[startIndex];
 }
 
-float* cyclic_buffer_container::pop_address()
+float* channel_buffer::pop_address()
 {
     if (mBufferCount == 0) {
         throw std::logic_error("failed getting pop address! buffer empty");
