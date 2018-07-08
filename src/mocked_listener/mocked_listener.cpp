@@ -3,15 +3,16 @@
 #include "mocked_listener.h"
 #include "device_manager/device_manager.h"
 #include "settings.h"
+#include "utilities/logger.h"
 
 
 using std::cout;
 using std::endl;
 
-mocked_listener::mocked_listener() : pAnalyzer{nullptr}, mPlayer{720},
+mocked_listener::mocked_listener() : pAnalyzer{nullptr}, mPlayer{440},
 pFakeInputBuffer{new float[LISTENER_FRAMES_PER_BUFFER * LISTENER_CHANNELS]}
 {
-    cout << "mocked listener constructed" << endl;
+    logger::warning("mocked listener constructed");
 }
 
 mocked_listener::~mocked_listener()
@@ -102,7 +103,7 @@ void mocked_listener::listen_finished_callback(void* userData)
 
 void mocked_listener::on_listen_finished()
 {
-    cout << "listen finished" << endl;
+    logger::warning("mocked listener on_listen_finished()");
 }
 
 bool mocked_listener::is_listening() const

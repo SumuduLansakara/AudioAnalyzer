@@ -1,4 +1,4 @@
-#define MOCK 0
+#define MOCK 1
 
 #if MOCK
 #include "mocked_listener/mocked_listener.h"
@@ -20,6 +20,7 @@
 using std::cout;
 using std::endl;
 using std::string;
+using std::to_string;
 
 void demo_player(int frequency)
 {
@@ -95,11 +96,11 @@ int main(int argc, char** argv)
 
     runtime::init(argv[0]);
     logger::init(runtime::get_instance()->get_path_from_root("bpiaulog.log"), logger::LEVEL_DEBUG);
-    logger::info("### started ###");
-    device_manager::get_instance();
+    logger::info("### logging started [" + runtime::get_instance()->get_instance_ID() + "] ###");
+    device_manager::init();
     switch (run_mode) {
     case 'p':
-        logger::info("starting generator [" + std::to_string(generator_frequency) + " Hz]");
+        logger::info("starting generator [" + to_string(generator_frequency) + " Hz]");
         demo_player(generator_frequency);
         break;
     case 'l':

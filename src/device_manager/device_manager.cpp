@@ -4,6 +4,7 @@
 #include <utility>
 #include <exception>
 #include <sstream>
+#include <cassert>
 
 #include "device_manager.h"
 #include "device.h"
@@ -17,10 +18,18 @@ using std::runtime_error;
 
 device_manager* device_manager::sInstance{nullptr};
 
+void device_manager::init()
+{
+    assert(sInstance == nullptr);
+    freopen("/dev/null", "w", stderr);
+    sInstance = new device_manager();
+    freopen("/dev/tty", "w", stderr);
+}
+
 device_manager* device_manager::get_instance()
 {
-    if (sInstance == nullptr) {
-        sInstance = new device_manager();
+    if (not sInstance) {
+        throw std::runtime_error("device_manager not initialized!");
     }
     return sInstance;
 }

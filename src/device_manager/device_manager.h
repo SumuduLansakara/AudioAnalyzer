@@ -6,6 +6,7 @@
 class device_manager
 {
 public:
+    static void init();
     static device_manager* get_instance();
 
     device_manager(const device_manager&) = delete;

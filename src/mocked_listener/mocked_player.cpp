@@ -7,14 +7,16 @@
 #include "device_manager/device_manager.h"
 #include "mocked_player.h"
 #include "settings.h"
+#include "utilities/logger.h"
 
 using std::cout;
 using std::endl;
+using std::to_string;
 
 mocked_player::mocked_player(int frequency) : mFrequency{frequency}, mPhase{0},
 mTableLength{static_cast<int> (PLAYER_SAMPLE_RATE / mFrequency)}, mTable{new float[mTableLength]}
 {
-    cout << "mocked player constructed [" << frequency << "]" << endl;
+    logger::warning("mocked player constructed [" + to_string(frequency) + "]");
     for (int i{0}; i < mTableLength; i++) {
         mTable[i] = static_cast<float> (sin(2 * M_PI * ((double) i / mTableLength)));
     }
