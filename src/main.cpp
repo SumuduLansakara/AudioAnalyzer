@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 
     runtime::init(argv[0]);
     logger::init(runtime::get_instance()->get_path_from_root("bpiaulog.log"), logger::LEVEL_DEBUG);
-    logger::info("### logging started [" + runtime::get_instance()->get_instance_ID() + "] ###");
+    logger::debug("instance ID = " + runtime::get_instance()->get_instance_ID());
     device_manager::init();
     switch (run_mode) {
     case 'p':

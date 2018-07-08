@@ -80,6 +80,7 @@ void logger::init(const std::string& logpath, int logLevel)
 {
     assert(sInstance == nullptr);
     sInstance = new logger(logpath, logLevel);
+    sInstance->mLogfile << endl;
 }
 
 logger* logger::get_instance()

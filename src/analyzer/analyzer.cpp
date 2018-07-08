@@ -69,7 +69,7 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
     (void) framesPerBuffer;
     (void) timeInfo;
     if (statusFlags != 0) {
-	logger::warning("listener status = " + to_string(statusFlags));
+        logger::warning("listener status = " + to_string(statusFlags));
     }
     for (unsigned int i = 0; i < LISTENER_FRAMES_PER_BUFFER; i += ANALYZER_FFT_WINDOW_LENGTH) {
         analyze_window(0, inputBuffer, i, ANALYZER_FFT_WINDOW_LENGTH);
@@ -79,9 +79,9 @@ void spectrum_analyzer::analyze_buffer(const float * inputBuffer,
 void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer, unsigned int start_id,
                                        unsigned int len)
 {
-    float* bufferPushAddress = mCyclicBuffer.push_address();
+    float* bufferPushAddress{mCyclicBuffer.push_address()};
     for (unsigned int i{0}; i < len; ++i) {
-        const float sample = buffer[get_real_index(i + start_id, channel)];
+        const float sample{buffer[get_real_index(i + start_id, channel)]};
         mInput[i] = sample * mShapingWindow[i];
         *bufferPushAddress++ = sample;
     }
@@ -90,8 +90,8 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     fftwf_execute(mFFTPlan);
 
     // filter and calculate absolute
-    unsigned int peakSignalIndex = 0;
-    float peakSignalDb = -std::numeric_limits<float>::max();
+    unsigned int peakSignalIndex{0};
+    float peakSignalDb{-std::numeric_limits<float>::max()};
     ;
     for (unsigned int i{0}; i < ANALYZER_LOW_CUT_INDEX; i++) {
         pAmplitudesDB[i] = mDefaultNoiseDB;
@@ -111,15 +111,15 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         throw 8;
     }
 
-    const float noiseRMSDbL = get_RMS(ANALYZER_LOW_CUT_INDEX, peakSignalIndex - 1);
-    const float noiseRMSDbR = get_RMS(peakSignalIndex + 1, ANALYZER_HIGH_CUT_INDEX);
-    const float noiseRMSDb = -(noiseRMSDbL + noiseRMSDbR) / 2;
+    const float noiseRMSDbL{get_RMS(ANALYZER_LOW_CUT_INDEX, peakSignalIndex - 1)};
+    const float noiseRMSDbR{get_RMS(peakSignalIndex + 1, ANALYZER_HIGH_CUT_INDEX)};
+    const float noiseRMSDb{-(noiseRMSDbL + noiseRMSDbR) / 2};
 
     // calculate history status
-    const float histNoiseAvg = get_mean(pHistNoiseRMS, 0, HISTORY_LENGTH);
-    const float histNoiseSTD = get_std(pHistNoiseRMS, histNoiseAvg, 0, HISTORY_LENGTH);
-    const float histSignalAvg = get_mean(pHistSignalRMS, 0, HISTORY_LENGTH);
-    const float histSignalSTD = get_std(pHistSignalRMS, histSignalAvg, 0, HISTORY_LENGTH);
+    const float histNoiseAvg{get_mean(pHistNoiseRMS, 0, HISTORY_LENGTH)};
+    const float histNoiseSTD{get_std(pHistNoiseRMS, histNoiseAvg, 0, HISTORY_LENGTH)};
+    const float histSignalAvg{get_mean(pHistSignalRMS, 0, HISTORY_LENGTH)};
+    const float histSignalSTD{get_std(pHistSignalRMS, histSignalAvg, 0, HISTORY_LENGTH)};
 
     mStatus.signalMax = peakSignalDb;
     mStatus.signalAvg = histSignalAvg;
@@ -142,27 +142,28 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
     if (isSignificant && isGoodSNR && isStable) {
         if (not mStatus.isSignalLocked) {
             mStatus.lastLockedSignalMax = peakSignalDb;
-            cout << "[analyzer] locked to signal of " << peakSignalDb << "dBFS in frequency band " <<
-                    bin_to_freq(peakSignalIndex) << "-" << bin_to_freq(peakSignalIndex + 1) << "Hz" << endl;
+            logger::debug("signal locked: " + to_string(peakSignalDb) + " dBFS [" +
+                          to_string(bin_to_freq(peakSignalIndex)) + "-" +
+                          to_string(bin_to_freq(peakSignalIndex + 1)) + " Hz]");
             mStatus.isSignalLocked = true;
             if (abs(mStatus.lastUnlockedSignalMax - peakSignalDb > 10)) {
-                cout << "RECORD on lock" << endl;
+                logger::info("RECORD triggered [lock]");
                 save_wav_audio("_L");
             }
         }
     }
     else if (mStatus.isSignalLocked) {
         mStatus.lastUnlockedSignalMax = peakSignalDb;
-        cout << "[analyzer] signal unlocked" << endl;
+        logger::info("signal unlocked");
         mStatus.isSignalLocked = false;
         mStatus.isRecordingAllowed = false;
         if (abs(mStatus.lastLockedSignalMax - peakSignalDb > 10)) {
-            cout << "RECORD on unlock" << endl;
+            logger::info("RECORD triggered [unlock]");
             save_wav_audio("_U");
         }
     }
     if (mStatus.isBufferFull && pHistNoiseRMS[mNextHistoryIndex] != 0) {
-        cout << "[analyzer] history buffers filled" << endl;
+        logger::info("history buffers filled");
         mStatus.isBufferFull = true;
     }
     if (not mStatus.isBufferFull || not mStatus.isSignalLocked) {
@@ -175,15 +176,15 @@ void spectrum_analyzer::analyze_window(unsigned int channel, const float* buffer
         return;
     }
     if (histSignalSTD > MAX_HIST_SIGNAL_STD) {
-        cout << "[analyzer] REC (S)" << endl;
+        logger::info("RECORD triggered [S]");
         save_wav_audio("_S");
     }
     else if (histNoiseSTD > MAX_HIST_NOISE_STD) {
-        cout << "[analyzer] REC (STD N)" << endl;
+        logger::info("RECORD triggered [Std N]");
         save_wav_audio("_StdN");
     }
     else if ((abs(histNoiseAvg) - abs(noiseRMSDb)) > 5) {
-        cout << "[analyzer] REC (Avg N)" << endl;
+        logger::info("RECORD triggered [Avg N]");
         save_wav_audio("_AvgN");
     }
     else {
